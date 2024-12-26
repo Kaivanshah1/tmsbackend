@@ -1,13 +1,16 @@
 package com.liquifysolutions.tms.tmsbackend.model
 
+import java.util.UUID
+
 data class Party(
-    val p_id: String,
+    val id: String? = UUID.randomUUID().toString(),
     val name: String,
-    val phone: String,
-    val address_1: String,
-    val address_2: String,
-    val email: String,
-    val pincode: String,
+    val contactNumber: String?,
+    val addressLine1: String?,
+    val addressLine2: String?,
+    val email: String?,
+    val pointOfContact: String?,
+    val pincode: String?,
     val state: String,
     val taluka: String,
     val city: String

@@ -10,7 +10,10 @@ class LocationService(private val locationRepository: LocationRepository) {
 
     fun getLocationById(id: String): Location? = locationRepository.getLocationById(id)
 
-    fun createLocation(location: Location): Int = locationRepository.createLocation(location)
+    fun createLocation(location: Location): Int  {
+        val id = locationRepository.createLocation(location)
+        return id
+    }
 
     fun updateLocation(location: Location): Int = locationRepository.updateLocation(location)
 

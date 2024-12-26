@@ -10,12 +10,13 @@ class PartyRepository(private val jdbcTemplate: JdbcTemplate) {
 
     private val rowMapper = RowMapper { rs, _ ->
         Party(
-            p_id = rs.getString("p_id"),
+            id = rs.getString("id"),
             name = rs.getString("name"),
-            phone = rs.getString("phone"),
-            address_1 = rs.getString("address_1"),
-            address_2 = rs.getString("address_2"),
+            contactNumber = rs.getString("contactNumber"),
+            addressLine1 = rs.getString("addressLine1"),
+            addressLine2 = rs.getString("addressLine2"),
             email = rs.getString("email"),
+            pointOfContact = rs.getString("pointOfContact"),
             pincode = rs.getString("pincode"),
             state = rs.getString("state"),
             taluka = rs.getString("taluka"),
@@ -29,35 +30,36 @@ class PartyRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getPartyById(id: String): Party? {
-        val sql = "SELECT * FROM party WHERE p_id = ?"
+        val sql = "SELECT * FROM party WHERE id = ?"
         return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
     }
 
     fun createParty(party: Party): Party {
-         jdbcTemplate.update(
-            "INSERT INTO party (p_id, name, phone, address_1, address_2, email, pincode, state, taluka, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-            party.p_id, party.name, party.phone, party.address_1, party.address_2,
-            party.email, party.pincode, party.state, party.taluka, party.city
+        jdbcTemplate.update(
+            "INSERT INTO party (id, name, contactNumber, addressLine1, addressLine2, email, pointOfContact, pincode, state, taluka, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            party.id, party.name, party.contactNumber, party.addressLine1, party.addressLine2,
+            party.email, party.pointOfContact, party.pincode, party.state, party.taluka, party.city
         )
-        return party;
+        return party
     }
 
     fun updateParty(party: Party): Int {
         val sql = """
-            UPDATE party
-            SET name = ?, phone = ?, address_1 = ?, address_2 = ?, email = ?, 
-                pincode = ?, state = ?, taluka = ?, city = ?
-            WHERE p_id = ?
-        """
+        UPDATE party
+        SET name = ?, contactNumber = ?, addressLine1 = ?, addressLine2 = ?, email = ?, 
+            pointOfContact = ?, pincode = ?, state = ?, taluka = ?, city = ?
+        WHERE id = ?
+    """
         return jdbcTemplate.update(
             sql,
-            party.name, party.phone, party.address_1, party.address_2,
-            party.email, party.pincode, party.state, party.taluka, party.city, party.p_id
+            party.name, party.contactNumber, party.addressLine1, party.addressLine2,
+            party.email, party.pointOfContact, party.pincode, party.state, party.taluka, party.city, party.id
         )
     }
 
+
     fun deletePartyById(id: String): Int {
-        val sql = "DELETE FROM party WHERE p_id = ?"
+        val sql = "DELETE FROM party WHERE id = ?"
         return jdbcTemplate.update(sql, id)
     }
 }

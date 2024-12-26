@@ -3,30 +3,41 @@ package com.liquifysolutions.tms.tmsbackend.controller
 import com.liquifysolutions.tms.tmsbackend.model.*
 import com.liquifysolutions.tms.tmsbackend.service.LocationService
 import com.liquifysolutions.tms.tmsbackend.service.StateService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+@CrossOrigin
 @RestController
-@RequestMapping("/v1/api/location")
+@RequestMapping("/api/v1/locations")
 class LocationController(private val locationService: LocationService, private val stateService: StateService) {
-    @GetMapping
+
+    @PostMapping("/list")
     fun getAllLocations(): ResponseEntity<List<Location>> =
         ResponseEntity.ok(locationService.getAllLocations())
 
-    @GetMapping("/{id}")
-    fun getLocationById(@PathVariable id: String): ResponseEntity<Location> =
-        locationService.getLocationById(id)?.let { ResponseEntity.ok(it) }
-            ?: ResponseEntity.notFound().build()
+    @GetMapping("get/{id}")
+    fun getLocationById(@PathVariable id: String): ResponseEntity<Location> {
+        return try {
+            val location = locationService.getLocationById(id)
+            location?.let {
+                ResponseEntity.ok(it)
+            } ?: ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        } catch (ex: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(null)
+        }
+    }
 
-    @PostMapping
+    @PostMapping("/create")
     fun createLocation(@RequestBody location: Location): ResponseEntity<String> {
         locationService.createLocation(location)
         return ResponseEntity.ok("Location created successfully")
     }
 
-    @PutMapping("/{id}")
-    fun updateLocation(@PathVariable id: String, @RequestBody location: Location): ResponseEntity<String> {
-        locationService.updateLocation(location.copy(l_id = id))
+    @PostMapping("/update")
+    fun updateLocation(@RequestBody location: Location): ResponseEntity<String> {
+        locationService.updateLocation(location)
         return ResponseEntity.ok("Location updated successfully")
     }
 
@@ -35,29 +46,4 @@ class LocationController(private val locationService: LocationService, private v
         locationService.deleteLocationById(id)
         return ResponseEntity.ok("Location deleted successfully")
     }
-
-//    @GetMapping("/districts")
-//    fun getAllDistricts(): ResponseEntity<List<District>> {
-//        return ResponseEntity.ok(stateService.getAllDistricts())
-//    }
-//
-//    @GetMapping("/talukas")
-//    fun listTalukas(): ResponseEntity<List<Taluka>> =
-//        ResponseEntity.ok(stateService.getAllTalukas())
-//
-//    @GetMapping("/cities")
-//    fun listCities(): ResponseEntity<List<City>> =
-//        ResponseEntity.ok(stateService.getAllCities())
-//
-//    @PostMapping("/talukas/filter")
-//    fun filterTalukas(
-//        @RequestBody request: TalukaFilterRequest
-//    ): ResponseEntity<List<Taluka>> =
-//        ResponseEntity.ok(stateService.getTalukasByDistrictAndState(request))
-//
-//    @PostMapping("/cities/filter")
-//    fun filterCities(
-//        @RequestBody request: CityFilterRequest
-//    ): ResponseEntity<List<City>> =
-//        ResponseEntity.ok(stateService.getCitiesByDistrictAndTaluka(request))
 }

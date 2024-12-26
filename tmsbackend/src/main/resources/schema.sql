@@ -32,12 +32,13 @@ CREATE TABLE Location (
 CREATE TABLE Party (
     p_id VARCHAR(255) PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    phone VARCHAR(15),
-    address_1 VARCHAR(255),
-    address_2 VARCHAR(255),
+    contactNumber VARCHAR(15),
+    addressLine1 VARCHAR(255),
+    addressLine2 VARCHAR(255),
     email VARCHAR(255),
+    pointOfContact VARCHAR(255),
     pincode VARCHAR(10),
-    state VARCHAR(255),
-    taluka VARCHAR(255),
-    city VARCHAR(255)
+    state VARCHAR(100) NOT NULL,
+    taluka VARCHAR(100),
+    city VARCHAR(100) NOT NULL
 );

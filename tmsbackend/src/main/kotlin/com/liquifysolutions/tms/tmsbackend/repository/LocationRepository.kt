@@ -11,17 +11,17 @@ class LocationRepository(private val jdbcTemplate: JdbcTemplate) {
 
     private val locationRowMapper = RowMapper { rs: ResultSet, _: Int ->
         Location(
-            l_id = rs.getString("l_id"),
+            id = rs.getString("id"),
             name = rs.getString("name"),
-            point_of_contact = rs.getString("point_of_contact"),
-            district = rs.getString("district"),
-            taluka = rs.getString("taluka"),
-            city = rs.getString("city"),
+            contactNumber = rs.getString("contactNumber"),
+            addressLine1 = rs.getString("addressLine1"),
+            addressLine2 = rs.getString("addressLine2"),
             email = rs.getString("email"),
-            phone = rs.getString("phone"),
+            pointOfContact = rs.getString("pointOfContact"),
             pincode = rs.getString("pincode"),
-            address_1 = rs.getString("address_1"),
-            address_2 = rs.getString("address_2")
+            state = rs.getString("state"),
+            taluka = rs.getString("taluka"),
+            city = rs.getString("city")
         )
     }
 
@@ -31,55 +31,55 @@ class LocationRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getLocationById(id: String): Location? {
-        val sql = "SELECT * FROM Location WHERE l_id = ?"
+        val sql = "SELECT * FROM Location WHERE id = ?"
         return jdbcTemplate.queryForObject(sql, locationRowMapper, id)
     }
 
     fun createLocation(location: Location): Int {
         val sql = """
-            INSERT INTO Location (l_id, name, point_of_contact, district, taluka, city, email, phone, pincode, address_1, address_2) 
+            INSERT INTO Location (id, name, contactNumber, addressLine1, addressLine2, email, pointOfContact, pincode, state, taluka, city) 
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """.trimIndent()
         return jdbcTemplate.update(
             sql,
-            location.l_id,
+            location.id,
             location.name,
-            location.point_of_contact,
-            location.district,
-            location.taluka,
-            location.city,
+            location.contactNumber,
+            location.addressLine1,
+            location.addressLine2,
             location.email,
-            location.phone,
+            location.pointOfContact,
             location.pincode,
-            location.address_1,
-            location.address_2
+            location.state,
+            location.taluka,
+            location.city
         )
     }
 
     fun updateLocation(location: Location): Int {
         val sql = """
             UPDATE Location 
-            SET name = ?, point_of_contact = ?, district = ?, taluka = ?, city = ?, email = ?, phone = ?, pincode = ?, address_1 = ?, address_2 = ?
-            WHERE l_id = ?
+            SET name = ?, contactNumber = ?, addressLine1 = ?, addressLine2 = ?, email = ?, pointOfContact = ?, pincode = ?, state = ?, taluka = ?, city = ?
+            WHERE id = ?
         """.trimIndent()
         return jdbcTemplate.update(
             sql,
             location.name,
-            location.point_of_contact,
-            location.district,
+            location.contactNumber,
+            location.addressLine1,
+            location.addressLine2,
+            location.email,
+            location.pointOfContact,
+            location.pincode,
+            location.state,
             location.taluka,
             location.city,
-            location.email,
-            location.phone,
-            location.pincode,
-            location.address_1,
-            location.address_2,
-            location.l_id
+            location.id
         )
     }
 
     fun deleteLocationById(id: String): Int {
-        val sql = "DELETE FROM Location WHERE l_id = ?"
+        val sql = "DELETE FROM Location WHERE id = ?"
         return jdbcTemplate.update(sql, id)
     }
 }

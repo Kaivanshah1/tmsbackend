@@ -5,28 +5,29 @@ import com.liquifysolutions.tms.tmsbackend.service.PartyService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+@CrossOrigin
 @RestController
-@RequestMapping("/v1/api/parties")
+@RequestMapping("/api/v1/parties")
 class PartyController(private val partyService: PartyService) {
 
-    @GetMapping
+    @PostMapping("/list")
     fun getAllParties(): ResponseEntity<List<Party>> =
         ResponseEntity.ok(partyService.getAllParties())
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     fun getPartyById(@PathVariable id: String): ResponseEntity<Party> =
         partyService.getPartyById(id)?.let { ResponseEntity.ok(it) }
             ?: ResponseEntity.notFound().build()
 
-    @PostMapping
+    @PostMapping("/create")
     fun createParty(@RequestBody party: Party): ResponseEntity<String> {
         partyService.createParty(party)
         return ResponseEntity.ok("Party created successfully")
     }
 
-    @PutMapping("/{id}")
-    fun updateParty(@PathVariable id: String, @RequestBody party: Party): ResponseEntity<String> {
-        partyService.updateParty(party.copy(p_id = id))
+    @PostMapping("/update")
+    fun updateParty(@RequestBody party: Party): ResponseEntity<String> {
+        partyService.updateParty(party)
         return ResponseEntity.ok("Party updated successfully")
     }
 

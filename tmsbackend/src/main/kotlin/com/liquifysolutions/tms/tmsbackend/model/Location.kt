@@ -1,16 +1,18 @@
 package com.liquifysolutions.tms.tmsbackend.model
 
+import java.util.UUID
+
 data class Location(
-    val l_id: String,
+    val id: String? = UUID.randomUUID().toString(),
     val name: String,
-    val point_of_contact: String,
-    val district: String,
+    val contactNumber: String?,
+    val addressLine1: String?,
+    val addressLine2: String?,
+    val email: String?,
+    val pointOfContact: String?,
+    val pincode: String?,
+    val state: String,
     val taluka: String,
-    val city: String,
-    val email: String,
-    val phone: String,
-    val pincode: String,
-    val address_1: String,
-    val address_2: String
+    val city: String
 )
 
