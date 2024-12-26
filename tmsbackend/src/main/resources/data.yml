@@ -1,215 +1,216 @@
 locations:
-  - name: "Gujarat"
-    districts:
-      - name: "Ahmedabad"
-        talukas:
-          - name: "Daskroi"
-            cities:
-              - "Ahmedabad City"
-          - name: "Sanand"
-            cities:
-              - "Sanand City"
-      - name: "Surat"
-        talukas:
-          - name: "Olpad"
-            cities:
-              - "Surat City"
-          - name: "Udhna"
-            cities:
-              - "Udhna City"
-      - name: "Vadodara"
-        talukas:
-          - name: "Karjan"
-            cities:
-              - "Vadodara City"
-          - name: "Padra"
-            cities:
-              - "Padra City"
-      - name: "Rajkot"
-        talukas:
-          - name: "Jetpur"
-            cities:
-              - "Rajkot City"
-          - name: "Mango"
-            cities:
-              - "Mango City"
-      - name: "Bhavnagar"
-        talukas:
-          - name: "Talaja"
-            cities:
-              - "Bhavnagar City"
-          - name: "Palitana"
-            cities:
-              - "Palitana City"
-      - name: "Jamnagar"
-        talukas:
-          - name: "Khambhalia"
-            cities:
-              - "Jamnagar City"
-          - name: "Lalpur"
-            cities:
-              - "Lalpur City"
-      - name: "Gandhinagar"
-        talukas:
-          - name: "Kalol"
-            cities:
-              - "Gandhinagar City"
-          - name: "Mansa"
-            cities:
-              - "Mansa City"
-      - name: "Godhra"
-        talukas:
-          - name: "Chhota Udepur"
-            cities:
-              - "Godhra City"
-          - name: "Vaghodia"
-            cities:
-              - "Vaghodia City"
-      - name: "Anand"
-        talukas:
-          - name: "Khambholaj"
-            cities:
-              - "Anand City"
-          - name: "Tarapur"
-            cities:
-              - "Tarapur City"
-      - name: "Surendranagar"
-        talukas:
-          - name: "Dasada"
-            cities:
-              - "Surendranagar City"
-          - name: "Chotila"
-            cities:
-              - "Chotila City"
-      - name: "Bhuj"
-        talukas:
-          - name: "Mandvi"
-            cities:
-              - "Bhuj City"
-          - name: "Anjar"
-            cities:
-              - "Anjar City"
-      - name: "Patan"
-        talukas:
-          - name: "Santalpur"
-            cities:
-              - "Patan City"
-          - name: "Unjha"
-            cities:
-              - "Unjha City"
-      - name: "Mehsana"
-        talukas:
-          - name: "Kadi"
-            cities:
-              - "Mehsana City"
-          - name: "Becharaji"
-            cities:
-              - "Becharaji City"
-      - name: "Valsad"
-        talukas:
-          - name: "Pardi"
-            cities:
-              - "Valsad City"
-          - name: "Dharampur"
-            cities:
-              - "Dharampur City"
-      - name: "Porbandar"
-        talukas:
-          - name: "Ranavav"
-            cities:
-              - "Porbandar City"
-          - name: "Bhanvad"
-            cities:
-              - "Bhanvad City"
-      - name: "Navsari"
-        talukas:
-          - name: "Gandevi"
-            cities:
-              - "Navsari City"
-          - name: "Valsad"
-            cities:
-              - "Valsad City"
-      - name: "Vapi"
-        talukas:
-          - name: "Daman"
-            cities:
-              - "Vapi City"
-          - name: "Silvassa"
-            cities:
-              - "Silvassa City"
-      - name: "Dang"
-        talukas:
-          - name: "Ahwa"
-            cities:
-              - "Dang City"
-          - name: "Subir"
-            cities:
-              - "Subir City"
+  states:
+    - name: "Gujarat"
+      districts:
+        - name: "Ahmedabad"
+          talukas:
+            - name: "Daskroi"
+              cities:
+                - "Ahmedabad City"
+            - name: "Sanand"
+              cities:
+                - "Sanand City"
+        - name: "Surat"
+          talukas:
+            - name: "Olpad"
+              cities:
+                - "Surat City"
+            - name: "Udhna"
+              cities:
+                - "Udhna City"
+        - name: "Vadodara"
+          talukas:
+            - name: "Karjan"
+              cities:
+                - "Vadodara City"
+            - name: "Padra"
+              cities:
+                - "Padra City"
+        - name: "Rajkot"
+          talukas:
+            - name: "Jetpur"
+              cities:
+                - "Rajkot City"
+            - name: "Mango"
+              cities:
+                - "Mango City"
+        - name: "Bhavnagar"
+          talukas:
+            - name: "Talaja"
+              cities:
+                - "Bhavnagar City"
+            - name: "Palitana"
+              cities:
+                - "Palitana City"
+        - name: "Jamnagar"
+          talukas:
+            - name: "Khambhalia"
+              cities:
+                - "Jamnagar City"
+            - name: "Lalpur"
+              cities:
+                - "Lalpur City"
+        - name: "Gandhinagar"
+          talukas:
+            - name: "Kalol"
+              cities:
+                - "Gandhinagar City"
+            - name: "Mansa"
+              cities:
+                - "Mansa City"
+        - name: "Godhra"
+          talukas:
+            - name: "Chhota Udepur"
+              cities:
+                - "Godhra City"
+            - name: "Vaghodia"
+              cities:
+                - "Vaghodia City"
+        - name: "Anand"
+          talukas:
+            - name: "Khambholaj"
+              cities:
+                - "Anand City"
+            - name: "Tarapur"
+              cities:
+                - "Tarapur City"
+        - name: "Surendranagar"
+          talukas:
+            - name: "Dasada"
+              cities:
+                - "Surendranagar City"
+            - name: "Chotila"
+              cities:
+                - "Chotila City"
+        - name: "Bhuj"
+          talukas:
+            - name: "Mandvi"
+              cities:
+                - "Bhuj City"
+            - name: "Anjar"
+              cities:
+                - "Anjar City"
+        - name: "Patan"
+          talukas:
+            - name: "Santalpur"
+              cities:
+                - "Patan City"
+            - name: "Unjha"
+              cities:
+                - "Unjha City"
+        - name: "Mehsana"
+          talukas:
+            - name: "Kadi"
+              cities:
+                - "Mehsana City"
+            - name: "Becharaji"
+              cities:
+                - "Becharaji City"
+        - name: "Valsad"
+          talukas:
+            - name: "Pardi"
+              cities:
+                - "Valsad City"
+            - name: "Dharampur"
+              cities:
+                - "Dharampur City"
+        - name: "Porbandar"
+          talukas:
+            - name: "Ranavav"
+              cities:
+                - "Porbandar City"
+            - name: "Bhanvad"
+              cities:
+                - "Bhanvad City"
+        - name: "Navsari"
+          talukas:
+            - name: "Gandevi"
+              cities:
+                - "Navsari City"
+            - name: "Valsad"
+              cities:
+                - "Valsad City"
+        - name: "Vapi"
+          talukas:
+            - name: "Daman"
+              cities:
+                - "Vapi City"
+            - name: "Silvassa"
+              cities:
+                - "Silvassa City"
+        - name: "Dang"
+          talukas:
+            - name: "Ahwa"
+              cities:
+                - "Dang City"
+            - name: "Subir"
+              cities:
+                - "Subir City"
 
-  - name: "Uttar Pradesh"
-    districts:
-      - name: "Lucknow"
-        talukas:
-          - name: "Gomti Nagar"
-            cities:
-              - "Lucknow City"
-          - name: "Aashiyana"
-            cities:
-              - "Aashiyana City"
-      - name: "Varanasi"
-        talukas:
-          - name: "Ramnagar"
-            cities:
-              - "Varanasi City"
-          - name: "Assi"
-            cities:
-              - "Assi City"
+    - name: "Uttar Pradesh"
+      districts:
+        - name: "Lucknow"
+          talukas:
+            - name: "Gomti Nagar"
+              cities:
+                - "Lucknow City"
+            - name: "Aashiyana"
+              cities:
+                - "Aashiyana City"
+        - name: "Varanasi"
+          talukas:
+            - name: "Ramnagar"
+              cities:
+                - "Varanasi City"
+            - name: "Assi"
+              cities:
+                - "Assi City"
 
-  - name: "Punjab"
-    districts:
-      - name: "Ludhiana"
-        talukas:
-          - name: "Dehlon"
-            cities:
-              - "Ludhiana City"
-          - name: "Jagraon"
-            cities:
-              - "Jagraon City"
-      - name: "Amritsar"
-        talukas:
-          - name: "Majitha"
-            cities:
-              - "Amritsar City"
-          - name: "Batala"
-            cities:
-              - "Batala City"
+    - name: "Punjab"
+      districts:
+        - name: "Ludhiana"
+          talukas:
+            - name: "Dehlon"
+              cities:
+                - "Ludhiana City"
+            - name: "Jagraon"
+              cities:
+                - "Jagraon City"
+        - name: "Amritsar"
+          talukas:
+            - name: "Majitha"
+              cities:
+                - "Amritsar City"
+            - name: "Batala"
+              cities:
+                - "Batala City"
 
-  - name: "Haryana"
-    districts:
-      - name: "Gurgaon"
-        talukas:
-          - name: "Sohna"
-            cities:
-              - "Gurgaon City"
-          - name: "Pataudi"
-            cities:
-              - "Pataudi City"
-      - name: "Hisar"
-        talukas:
-          - name: "Barwala"
-            cities:
-              - "Hisar City"
-          - name: "Narnaund"
-            cities:
-              - "Narnaund City"
+    - name: "Haryana"
+      districts:
+        - name: "Gurgaon"
+          talukas:
+            - name: "Sohna"
+              cities:
+                - "Gurgaon City"
+            - name: "Pataudi"
+              cities:
+                - "Pataudi City"
+        - name: "Hisar"
+          talukas:
+            - name: "Barwala"
+              cities:
+                - "Hisar City"
+            - name: "Narnaund"
+              cities:
+                - "Narnaund City"
 
-  - name: "Uttarakhand"
-    districts:
-      - name: "Dehradun"
-        talukas:
-          - name: "Vikasnagar"
-            cities:
-              - "Dehradun City"
-          - name: "Mussoorie"
-            cities:
-              - "Mussoorie City"
+    - name: "Uttarakhand"
+      districts:
+        - name: "Dehradun"
+          talukas:
+            - name: "Vikasnagar"
+              cities:
+                - "Dehradun City"
+            - name: "Mussoorie"
+              cities:
+                - "Mussoorie City"

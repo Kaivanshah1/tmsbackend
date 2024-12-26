@@ -82,46 +82,4 @@ class LocationRepository(private val jdbcTemplate: JdbcTemplate) {
         val sql = "DELETE FROM Location WHERE l_id = ?"
         return jdbcTemplate.update(sql, id)
     }
-
-    fun getAllStates(): List<State> {
-        val sql = "SELECT * FROM state"
-        return jdbcTemplate.query(sql) { rs, _ ->
-            State(
-                s_id = rs.getString("s_id"),
-                name = rs.getString("name")
-            )
-        }
-    }
-
-    fun getAllDistricts(): List<District> {
-        val sql = "SELECT * FROM District"
-        return jdbcTemplate.query(sql) { rs, _ ->
-            District(
-                d_id = rs.getString("d_id"),
-                name = rs.getString("name")
-            )
-        }
-    }
-
-    fun getAllTalukas(): List<Taluka> {
-        val sql = "SELECT * FROM Taluka"
-        return jdbcTemplate.query(sql) { rs, _ ->
-            Taluka(
-                t_id = rs.getString("t_id"),
-                name = rs.getString("name"),
-                district_id = rs.getString("district_id")
-            )
-        }
-    }
-
-    fun getAllCities(): List<City> {
-        val sql = "SELECT * FROM City"
-        return jdbcTemplate.query(sql) { rs, _ ->
-            City(
-                c_id = rs.getString("c_id"),
-                name = rs.getString("name"),
-                taluka_id = rs.getString("taluka_id")
-            )
-        }
-    }
 }

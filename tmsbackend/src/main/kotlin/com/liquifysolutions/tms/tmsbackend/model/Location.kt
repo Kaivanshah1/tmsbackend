@@ -13,3 +13,4 @@ data class Location(
     val address_1: String,
     val address_2: String
 )
+

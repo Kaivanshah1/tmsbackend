@@ -24,30 +24,27 @@ class PartyRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getAllParties(): List<Party> {
-        val sql = "SELECT * FROM parties"
+        val sql = "SELECT * FROM party"
         return jdbcTemplate.query(sql, rowMapper)
     }
 
     fun getPartyById(id: String): Party? {
-        val sql = "SELECT * FROM parties WHERE p_id = ?"
+        val sql = "SELECT * FROM party WHERE p_id = ?"
         return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
     }
 
-    fun createParty(party: Party): Int {
-        val sql = """
-            INSERT INTO parties (p_id, name, phone, address_1, address_2, email, pincode, state, taluka, city)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
-        return jdbcTemplate.update(
-            sql,
+    fun createParty(party: Party): Party {
+         jdbcTemplate.update(
+            "INSERT INTO party (p_id, name, phone, address_1, address_2, email, pincode, state, taluka, city) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             party.p_id, party.name, party.phone, party.address_1, party.address_2,
             party.email, party.pincode, party.state, party.taluka, party.city
         )
+        return party;
     }
 
     fun updateParty(party: Party): Int {
         val sql = """
-            UPDATE parties
+            UPDATE party
             SET name = ?, phone = ?, address_1 = ?, address_2 = ?, email = ?, 
                 pincode = ?, state = ?, taluka = ?, city = ?
             WHERE p_id = ?
@@ -60,7 +57,7 @@ class PartyRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun deletePartyById(id: String): Int {
-        val sql = "DELETE FROM parties WHERE p_id = ?"
+        val sql = "DELETE FROM party WHERE p_id = ?"
         return jdbcTemplate.update(sql, id)
     }
 }

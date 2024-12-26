@@ -4,7 +4,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-@ConfigurationProperties(prefix = "locationmapping")
+@ConfigurationProperties(prefix = "locations")
 class LocationMappingConfig {
     var states: List<State> = listOf()
 }

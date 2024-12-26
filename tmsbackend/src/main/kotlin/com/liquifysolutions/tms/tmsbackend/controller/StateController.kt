@@ -5,39 +5,27 @@ import com.liquifysolutions.tms.tmsbackend.service.StateService
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
+@CrossOrigin
 @RestController
-@RequestMapping("/v1/api/states")
+@RequestMapping("/api/v1")
 class StateController(private val stateService: StateService) {
-
-    @GetMapping("/all-locations")
-    fun getAllLocationData(): ResponseEntity<StateService.LocationData> =
-        ResponseEntity.ok(stateService.getAllLocationData())
-
-    @GetMapping("/districts")
-    fun getAllDistricts(): ResponseEntity<List<District>> =
-        ResponseEntity.ok(stateService.getAllDistricts())
-
-    @PostMapping("/districts/filter")
-    fun getDistrictsByState(@RequestBody request: StateFilterRequest): ResponseEntity<List<District>> =
-        ResponseEntity.ok(stateService.getDistrictsByState(request))
-
-    @GetMapping("/talukas")
-    fun getAllTalukas(): ResponseEntity<List<Taluka>> =
-        ResponseEntity.ok(stateService.getAllTalukas())
-
-    @PostMapping("/talukas/filter")
-    fun getTalukasByStateAndDistrict(
-        @RequestBody request: TalukaFilterRequest
-    ): ResponseEntity<List<Taluka>> {
-        val stateFilter = StateFilterRequest(request.state)
-        return ResponseEntity.ok(stateService.getTalukasByDistrictAndState(request, stateFilter))
+    @GetMapping("/states/list")
+    fun getAllState(): ResponseEntity<List<String>>{
+        return ResponseEntity.ok(stateService.getAllStates());
     }
 
-    @GetMapping("/cities")
-    fun getAllCities(): ResponseEntity<List<City>> =
-        ResponseEntity.ok(stateService.getAllCities())
+    @PostMapping("/districts/list")
+    fun getDistrictsByState(@RequestBody request: StateFilterRequest): ResponseEntity<List<String>> =
+        ResponseEntity.ok(stateService.getDistricts(request))
 
-    @PostMapping("/cities/filter")
-    fun getCitiesByDistrictAndTaluka(@RequestBody request: CityFilterRequest): ResponseEntity<List<City>> =
-        ResponseEntity.ok(stateService.getCitiesByStateAndDistrictAndTaluka(request))
+    @PostMapping("/talukas/list")
+    fun getTalukasByStateAndDistrict(
+        @RequestBody request: TalukaFilterRequest
+    ): ResponseEntity<List<String>> {
+        return ResponseEntity.ok(stateService.getTalukas(request))
+    }
+
+    @PostMapping("/cities/list")
+    fun getCitiesByDistrictAndTaluka(@RequestBody request: CityFilterRequest): ResponseEntity<List<String>> =
+        ResponseEntity.ok(stateService.getCities(request))
 }

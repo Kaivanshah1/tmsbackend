@@ -2,7 +2,7 @@
 <project version="4">
   <component name="DBNavigator.Project.DataEditorManager">
     <record-view-column-sorting-type value="BY_INDEX" />
-    <value-preview-text-wrapping value="true" />
+    <value-preview-text-wrapping value="false" />
     <value-preview-pinned value="false" />
   </component>
   <component name="DBNavigator.Project.DatabaseConsoleManager">
@@ -20,7 +20,7 @@
     <retain-sticky-names value="false" />
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
-    <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/schema.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="public" />
+    <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/schema.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />

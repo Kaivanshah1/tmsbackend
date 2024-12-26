@@ -11,7 +11,7 @@ class PartyService(private val partyRepository: PartyRepository) {
 
     fun getPartyById(id: String): Party? = partyRepository.getPartyById(id)
 
-    fun createParty(party: Party): Int = partyRepository.createParty(party)
+    fun createParty(party: Party) = partyRepository.createParty(party)
 
     fun updateParty(party: Party): Int = partyRepository.updateParty(party)
 

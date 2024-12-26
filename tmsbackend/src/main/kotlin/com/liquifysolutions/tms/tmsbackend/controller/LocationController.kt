@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequestMapping("/v1/api")
+@RequestMapping("/v1/api/location")
 class LocationController(private val locationService: LocationService, private val stateService: StateService) {
     @GetMapping
     fun getAllLocations(): ResponseEntity<List<Location>> =
