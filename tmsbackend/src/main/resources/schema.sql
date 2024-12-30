@@ -2,13 +2,13 @@
 --    d_id VARCHAR(255) PRIMARY KEY,
 --    name VARCHAR(255) NOT NULL
 --);
---
+
 --CREATE TABLE Taluka (
 --    t_id VARCHAR(255) PRIMARY KEY,
 --    name VARCHAR(255) NOT NULL,
 --    district_id VARCHAR(255) NOT NULL REFERENCES tms.District(d_id) ON DELETE CASCADE
 --);
---
+
 --CREATE TABLE City (
 --    c_id VARCHAR(255) PRIMARY KEY,
 --    name VARCHAR(255) NOT NULL,
@@ -42,3 +42,28 @@ CREATE TABLE Party (
     taluka VARCHAR(100),
     city VARCHAR(100) NOT NULL
 );
+
+CREATE TABLE employees (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    contactNumber VARCHAR(15),
+    role varchar(255) NOT NULL,
+    createdAt BIGINT NOT NULL
+)
+
+CREATE TABLE materials (
+    id VARCHAR(36) PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE Users (
+    id VARCHAR(36) PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    passwordHash VARCHAR(255) NOT NULL,
+    role VARCHAR(50) DEFAULT 'USER',
+    refreshToken VARCHAR(255)
+);
+
+
+select * from users;
