@@ -59,6 +59,7 @@ CREATE TABLE materials (
 
 CREATE TABLE Users (
     id VARCHAR(36) PRIMARY KEY,
+    email
     username VARCHAR(255) NOT NULL,
     passwordHash VARCHAR(255) NOT NULL,
     role VARCHAR(50) DEFAULT 'USER',
@@ -66,4 +67,5 @@ CREATE TABLE Users (
 );
 
 
-select * from users;
+
+select * from Users;

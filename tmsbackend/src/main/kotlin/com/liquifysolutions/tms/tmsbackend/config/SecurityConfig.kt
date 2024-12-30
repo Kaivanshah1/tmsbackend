@@ -34,7 +34,7 @@ class SecurityConfig(val jwtUtil: JwtUtil) {
             .authorizeHttpRequests { auth ->
                 auth
                     // Public Routes
-                    .requestMatchers("/auth/**").permitAll()
+                    .requestMatchers("/api/v1/**").permitAll()
                     // Restricted Routes
                     .requestMatchers("/admin/**").hasRole("ADMIN")
                     // Open routes

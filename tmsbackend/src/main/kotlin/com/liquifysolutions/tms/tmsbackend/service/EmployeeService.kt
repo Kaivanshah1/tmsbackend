@@ -1,21 +1,21 @@
 package com.liquifysolutions.tms.tmsbackend.service
 
 import com.liquifysolutions.tms.tmsbackend.model.Employee
+import com.liquifysolutions.tms.tmsbackend.model.UserRegistrationDto
 import com.liquifysolutions.tms.tmsbackend.repository.EmployeeRepository
 import org.springframework.stereotype.Service
 
 @Service
-class EmployeeService(private val employeeRepository: EmployeeRepository) {
+class EmployeeService(private val employeeRepository: EmployeeRepository, private val authService: AuthService) {
 
     // Create a new employee
     fun createEmployee(employee: Employee): Employee {
-        try {
-            employeeRepository.create(employee)
-            return employee
-        } catch (e: Exception) {
-            throw e
-        }
-
+        employeeRepository.create(employee)
+//        val password = authService.generateRandomPassword(6)
+        val password = "123456"
+        val createdUser = UserRegistrationDto(username = employee.name, email = employee.email, password = password)
+        authService.registerUser(createdUser)
+        return employee
     }
 
     // Get an employee by ID

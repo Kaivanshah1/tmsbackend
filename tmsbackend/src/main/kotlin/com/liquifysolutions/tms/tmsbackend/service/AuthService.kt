@@ -10,6 +10,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.userdetails.UsernameNotFoundException
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Service
+import java.security.SecureRandom
 
 @Service
 class AuthService(
@@ -20,14 +21,14 @@ class AuthService(
     private val authenticationManager: AuthenticationManager
 ) {
     fun registerUser(userDto: UserRegistrationDto): User{
-            // Hash the password
-            val passwordHash = passwordEncoder.encode(userDto.password)
+        // Hash the password
+        val passwordHash = passwordEncoder.encode(userDto.password)
 
-            // Create a new user
-            val user = User(username = userDto.username, passwordHash = passwordHash, role = userDto.role)
+        // Create a new user
+        val user = User(username = userDto.username, email = userDto.email, passwordHash = passwordHash, role = userDto.role)
 
-            // Save user to the repository
-            return userRepository.save(user)
+        // Save user to the repository
+        return userRepository.save(user)
     }
 
     fun loginUser(username: String, password: String): AuthResponse {    // Handles user login and JWT generation.
@@ -40,7 +41,7 @@ class AuthService(
             val refreshToken = jwtUtil.generateRefreshToken(userDetails)
             val user = userRepository.findByUsername(username) ?: throw UsernameNotFoundException("user not found $username")
             user.refreshToken = refreshToken
-            userRepository.save(user)
+            userRepository.update(user)
             return AuthResponse(accessToken = accessToken, refreshToken = refreshToken)
         } catch (e: Exception) {
             throw e
@@ -59,5 +60,17 @@ class AuthService(
             return AuthResponse(accessToken = newAccessToken, refreshToken = newRefreshToken)
         }
         return null
+    }
+
+    fun generateRandomPassword(length: Int): String {
+        val chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@#\$%^&*()-_=+<>?/"
+        val random = SecureRandom()
+        val password = StringBuilder()
+
+        for (i in 0 until length) {
+            val randomIndex = random.nextInt(chars.length)
+            password.append(chars[randomIndex])
+        }
+        return password.toString()
     }
 }

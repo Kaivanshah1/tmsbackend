@@ -1,6 +1,8 @@
 package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.model.Employee
+import com.liquifysolutions.tms.tmsbackend.model.UserRegistrationDto
+import com.liquifysolutions.tms.tmsbackend.service.AuthService
 import com.liquifysolutions.tms.tmsbackend.service.EmployeeService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
