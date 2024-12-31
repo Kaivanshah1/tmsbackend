@@ -66,6 +66,32 @@ CREATE TABLE Users (
     refreshToken VARCHAR(255)
 );
 
+CREATE TABLE DeliveryOrder (
+    id VARCHAR(50) PRIMARY KEY,
+    contractId VARCHAR(50),
+    partyId VARCHAR(50),
+    dateOfContract BIGINT,
+    status VARCHAR(20) NOT NULL,
+    createdAt BIGINT,
+    updatedAt BIGINT
+);
 
+
+CREATE TABLE DeliveryOrderItem (
+    id VARCHAR(50) PRIMARY KEY,
+    deliveryOrderId VARCHAR(50) NOT NULL,
+    district VARCHAR(100),
+    taluka VARCHAR(100),
+    locationId VARCHAR(50),
+    materialId VARCHAR(50),
+    quantity INT NOT NULL,
+    rate INT,
+    unit VARCHAR(20),
+    dueDate BIGINT,
+    status VARCHAR(20) NOT NULL,
+    FOREIGN KEY (deliveryOrderId) REFERENCES DeliveryOrder(id)
+);
+
+select * from DeliveryOrder;
 
 select * from Users;
