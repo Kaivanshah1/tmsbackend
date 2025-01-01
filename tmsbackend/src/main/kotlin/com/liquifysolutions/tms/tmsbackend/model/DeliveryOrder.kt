@@ -13,11 +13,9 @@ data class DeliveryOrder(
     val grandTotalPendingQuantity: Int? = 0,
     val grandTotalInProgressQuantity: Int? = 0,
     val grandTotalDeliveredQuantity: Int? = 0,
-    val createdAt: Long?,
-    val updatedAt: Long?
+    val createdAt: Long? = System.currentTimeMillis(),
+    val updatedAt: Long? = System.currentTimeMillis()
 )
-
-
 
 data class DeliveryOrderItem(
     val id: String = UUID.randomUUID().toString(),
@@ -43,6 +41,6 @@ data class DeliveryOrderSection(
     val totalInProgressQuantity: Int = 0,
     val totalDeliveredQuantity: Int = 0,
     val status: String,
-    val deliveryOrderItems: List<DeliveryOrderItem>?
+    var deliveryOrderItems: List<DeliveryOrderItem>?
 )
 

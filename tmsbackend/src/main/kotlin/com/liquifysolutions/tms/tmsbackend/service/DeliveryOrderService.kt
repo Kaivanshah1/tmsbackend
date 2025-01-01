@@ -32,8 +32,16 @@ class DeliveryOrderService(
         return deliveryOrderRepository.findById(id)
     }
 
-    fun updateDeliveryOrder(deliveryOrder: DeliveryOrder): Int {
-        return deliveryOrderRepository.update(deliveryOrder)
+    fun updateDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): Int {
+        deliveryOrderRepository.update(deliveryOrder)
+        val itemsToSave = sections.flatMap { section ->
+            section.deliveryOrderItems?.map { item ->
+                item.copy(deliveryOrderId = deliveryOrder.id) // Associate with the deliveryOrderId
+            } ?: emptyList()
+        }
+
+        deliveryOrderItemRepository.syncItems(itemsToSave, deliveryOrder.id)
+        return 1;
     }
 
     fun deleteDeliveryOrderById(id: String): Int {

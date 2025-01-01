@@ -1,6 +1,7 @@
 package com.liquifysolutions.tms.tmsbackend.repository
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
+import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderSection
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -27,12 +28,27 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         )
     }
 
+    private val deliveryOrderItemRowMapper = RowMapper { rs: ResultSet, _: Int ->
+        DeliveryOrderItem(
+            id = rs.getString("id"),
+            deliveryOrderId = rs.getString("deliveryOrderId"),
+            district = rs.getString("district"),
+            taluka = rs.getString("taluka"),
+            locationId = rs.getString("locationId"),
+            materialId = rs.getString("materialId"),
+            quantity = rs.getInt("quantity"),
+            rate = rs.getDouble("rate"),
+            unit = rs.getString("unit"),
+            dueDate = rs.getLong("dueDate"),
+            status = rs.getString("status")
+        )
+    }
+
     fun getDeliveryOrderSections(deliveryOrderId: String): List<DeliveryOrderSection> {
         return emptyList()
     }
 
     fun create(deliveryOrder: DeliveryOrder): Int {
-
         try {
             val sql = """
             INSERT INTO DeliveryOrder (
@@ -62,9 +78,46 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun findById(id: String): DeliveryOrder? {
-        val sql = "SELECT * FROM DeliveryOrder WHERE id = ?"
-        return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
+        // 1. Fetch the DeliveryOrder
+        val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE id = ?"
+        val deliveryOrder = jdbcTemplate.query(deliveryOrderSql, rowMapper, id).firstOrNull() ?: return null
+
+        // 2. Fetch DeliveryOrderItems
+        val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
+        val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
+
+        // 3. Group into DeliveryOrderSections
+        val deliveryOrderSections = deliveryOrderItems.groupBy { it.district ?: "null_district" }.map { (district, items) ->
+            val actualDistrict = if (district == "null_district") null else district
+            DeliveryOrderSection(
+                district = actualDistrict,
+                totalQuantity = items.sumOf { it.quantity },
+                totalPendingQuantity = items.sumOf { it.pendingQuantity ?: 0 },
+                totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0 },
+                totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0 },
+                status = items.firstOrNull()?.status ?: "",
+                deliveryOrderItems = items
+            )
+        }
+        // Aggregate totals for grand totals
+        val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity }
+        val grandTotalPendingQuantity = deliveryOrderItems.sumOf { it.pendingQuantity ?: 0 }
+        val grandTotalInProgressQuantity = deliveryOrderItems.sumOf { it.inProgressQuantity ?: 0 }
+        val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0 }
+
+        // 4. Return the DeliveryOrder with sections
+        return deliveryOrder.copy(deliveryOrderSections = deliveryOrderSections,
+            grandTotalQuantity = grandTotalQuantity,
+            grandTotalPendingQuantity = grandTotalPendingQuantity,
+            grandTotalInProgressQuantity = grandTotalInProgressQuantity,
+            grandTotalDeliveredQuantity = grandTotalDeliveredQuantity
+        )
     }
+
+//    fun findById(id: String): DeliveryOrder? {
+//        val sql = ""
+//        return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
+//    }
 
     fun findAll(): List<DeliveryOrder> {
         val sql = "SELECT * FROM DeliveryOrder"

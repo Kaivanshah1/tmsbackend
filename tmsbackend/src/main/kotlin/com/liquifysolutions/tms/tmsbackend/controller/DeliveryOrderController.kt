@@ -29,13 +29,13 @@ class DeliveryOrderController(
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDeliveryOrderId)
     }
 
-    @GetMapping("/list")
+    @PostMapping("/list")
     fun getAllDeliveryOrder(): ResponseEntity<List<DeliveryOrder>>{
         val getAllDeliveryOrder = deliveryOrderService.listAllDeliveryOrder();
         return ResponseEntity.status(HttpStatus.CREATED).body(getAllDeliveryOrder);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/get/{id}")
     fun getDeliveryOrderById(@PathVariable id: String): ResponseEntity<DeliveryOrder?> {
         val deliveryOrder = deliveryOrderService.listDeliveryOrderById(id)
         return if (deliveryOrder != null) {
@@ -47,8 +47,9 @@ class DeliveryOrderController(
 
     @PostMapping("/update")
     fun updateDeliveryOrder(@RequestBody deliveryOrder: DeliveryOrder): ResponseEntity<String> {
+        val deliveryOrderSections = deliveryOrder.deliveryOrderSections ?: emptyList();
         return try {
-            val rowsUpdated = deliveryOrderService.updateDeliveryOrder(deliveryOrder)
+            val rowsUpdated = deliveryOrderService.updateDeliveryOrder(deliveryOrder, deliveryOrderSections)
             if (rowsUpdated > 0) {
                 ResponseEntity.ok("Delivery order updated successfully.")
             } else {
