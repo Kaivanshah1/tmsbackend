@@ -37,7 +37,7 @@ class DeliveryOrderController(
 
     @GetMapping("/get/{id}")
     fun getDeliveryOrderById(@PathVariable id: String): ResponseEntity<DeliveryOrder?> {
-        val deliveryOrder = deliveryOrderService.listDeliveryOrderById(id)
+        val deliveryOrder = deliveryOrderService.getDeliverOrderById(id)
         return if (deliveryOrder != null) {
             ResponseEntity.ok(deliveryOrder)
         } else {

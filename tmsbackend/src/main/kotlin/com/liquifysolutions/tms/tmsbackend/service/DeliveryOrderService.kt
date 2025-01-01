@@ -1,6 +1,7 @@
 package com.liquifysolutions.tms.tmsbackend.service
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
+import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderSection
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderItemRepository
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderRepository
@@ -14,11 +15,20 @@ class DeliveryOrderService(
     fun createDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): Int{
 
         deliveryOrderRepository.create(deliveryOrder)
-        val itemsToSave = sections.flatMap { section ->
-            section.deliveryOrderItems?.map { item ->
-                item.copy(deliveryOrderId = deliveryOrder.id) // Associate with the deliveryOrderId
-            } ?: emptyList()
+//        val itemsToSave = sections.flatMap { section ->
+//            section.deliveryOrderItems?.map { item ->
+//                item.copy(deliveryOrderId = deliveryOrder.id) // Associate with the deliveryOrderId
+//            } ?: emptyList()
+//        }
+
+        var itemsToSave: List<DeliveryOrderItem> = emptyList()
+
+        for (section in sections) {
+            for(item in section.deliveryOrderItems) {
+                itemsToSave = itemsToSave + item.copy(deliveryOrderId = deliveryOrder.id)
+            }
         }
+
 
          deliveryOrderItemRepository.saveAll(itemsToSave, deliveryOrder.id);
         return 1
@@ -28,7 +38,7 @@ class DeliveryOrderService(
         return deliveryOrderRepository.findAll()
     }
 
-    fun listDeliveryOrderById(id: String): DeliveryOrder?{
+    fun getDeliverOrderById(id: String): DeliveryOrder?{
         return deliveryOrderRepository.findById(id)
     }
 

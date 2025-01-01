@@ -41,6 +41,6 @@ data class DeliveryOrderSection(
     val totalInProgressQuantity: Int = 0,
     val totalDeliveredQuantity: Int = 0,
     val status: String,
-    var deliveryOrderItems: List<DeliveryOrderItem>?
+    var deliveryOrderItems: List<DeliveryOrderItem> = emptyList()
 )
 

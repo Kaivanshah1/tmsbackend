@@ -48,7 +48,7 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
         )
     }
 
-    private fun insertItems(items: List<DeliveryOrderItem>) {
+    fun insertItems(items: List<DeliveryOrderItem>) {
         if (items.isEmpty()) return
         val sql = """
             INSERT INTO DeliveryOrderItem (
@@ -188,8 +188,7 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
         deleteItems(itemsToDelete)
     }
 
-
-    private fun deleteItems(items: List<DeliveryOrderItem>) {
+    fun deleteItems(items: List<DeliveryOrderItem>) {
         if (items.isEmpty()) return
         val sql = "DELETE FROM DeliveryOrderItem WHERE id = ? AND deliveryOrderId = ?"
         try {
