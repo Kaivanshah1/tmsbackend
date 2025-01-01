@@ -1,6 +1,7 @@
 package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
+import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
 import com.liquifysolutions.tms.tmsbackend.service.DeliveryOrderService
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 
 @CrossOrigin
@@ -30,9 +32,12 @@ class DeliveryOrderController(
     }
 
     @PostMapping("/list")
-    fun getAllDeliveryOrder(): ResponseEntity<List<DeliveryOrder>>{
-        val getAllDeliveryOrder = deliveryOrderService.listAllDeliveryOrder();
-        return ResponseEntity.status(HttpStatus.CREATED).body(getAllDeliveryOrder);
+    fun getAllDeliveryOrder(
+        @RequestParam("page", defaultValue = "1") page: Int,
+        @RequestParam("size", defaultValue = "10") size: Int
+    ): ResponseEntity<List<ListDeliveryOrderItem>> {
+        val deliveryOrders = deliveryOrderService.listAllDeliveryOrder(page, size)
+        return ResponseEntity.status(HttpStatus.OK).body(deliveryOrders)
     }
 
     @GetMapping("/get/{id}")

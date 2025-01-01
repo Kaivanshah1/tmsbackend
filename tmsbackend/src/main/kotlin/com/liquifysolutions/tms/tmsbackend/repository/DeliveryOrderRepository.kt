@@ -3,6 +3,7 @@ package com.liquifysolutions.tms.tmsbackend.repository
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderSection
+import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
@@ -23,6 +24,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             grandTotalPendingQuantity = rs.getInt("grandTotalPendingQuantity"),
             grandTotalInProgressQuantity = rs.getInt("grandTotalInProgressQuantity"),
             grandTotalDeliveredQuantity = rs.getInt("grandTotalDeliveredQuantity"),
+            partyname = rs.getString("partyname"),
             createdAt = rs.getLong("createdAt").takeIf { !rs.wasNull() },
             updatedAt = rs.getLong("updatedAt").takeIf { !rs.wasNull() }
         )
@@ -119,9 +121,30 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 //        return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
 //    }
 
-    fun findAll(): List<DeliveryOrder> {
-        val sql = "SELECT * FROM DeliveryOrder"
-        return jdbcTemplate.query(sql, rowMapper)
+    fun findAll(limit: Int, offset: Int): List<ListDeliveryOrderItem> {
+        val sql = """
+        SELECT 
+            d.id AS id,
+            d.contractId,
+            d.partyId,
+            p.name AS partyname,
+            d.status,
+            d.createdAt
+        FROM DeliveryOrder d
+        LEFT JOIN Party p ON d.partyId = p.id
+        ORDER BY d.createdAt DESC
+        LIMIT ? OFFSET ?
+    """
+        return jdbcTemplate.query(sql, { rs, _ ->
+            ListDeliveryOrderItem(
+                id = rs.getString("id"),
+                contractId = rs.getString("contractId"),
+                partyId = rs.getString("partyId"),
+                partyname = rs.getString("partyname"),
+                status = rs.getString("status"),
+                createdAt = rs.getLong("createdAt"),
+            )
+        }, limit, offset)
     }
 
     fun update(deliveryOrder: DeliveryOrder): Int {

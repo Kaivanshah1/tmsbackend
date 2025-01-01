@@ -7,6 +7,7 @@ data class DeliveryOrder(
     val contractId: String?,
     val partyId: String?,
     val dateOfContract: Long?,
+    val partyname: String?,
     val status: String,
     val deliveryOrderSections: List<DeliveryOrderSection>?,
     val grandTotalQuantity: Int? = 0,
@@ -44,3 +45,11 @@ data class DeliveryOrderSection(
     var deliveryOrderItems: List<DeliveryOrderItem> = emptyList()
 )
 
+data class ListDeliveryOrderItem(
+    val id: String?,
+    val contractId: String?,
+    val partyId: String?,
+    val partyname: String?,
+    val status: String?,
+    val createdAt: Long?,
+)
