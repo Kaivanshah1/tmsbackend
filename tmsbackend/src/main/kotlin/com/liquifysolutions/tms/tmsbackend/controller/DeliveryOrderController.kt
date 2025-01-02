@@ -30,7 +30,6 @@ class DeliveryOrderController(
         val createdDeliveryOrderId = deliveryOrderService.createDeliveryOrder(request, deliveryOrderSections)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdDeliveryOrderId)
     }
-
     @PostMapping("/list")
     fun getAllDeliveryOrder(
         @RequestParam("page", defaultValue = "1") page: Int,

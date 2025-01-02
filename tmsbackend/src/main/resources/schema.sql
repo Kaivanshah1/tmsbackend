@@ -92,6 +92,20 @@ CREATE TABLE DeliveryOrderItem (
     FOREIGN KEY (deliveryOrderId) REFERENCES DeliveryOrder(id)
 );
 
-select * from DeliveryOrder;
+CREATE TABLE DeliveryChallan (
+    id varchar(255) PRIMARY KEY,
+    status VARCHAR(255),
+    do_id varchar(255) NOT NULL,
+    date BIGINT,
+    CONSTRAINT fk_delivery_order FOREIGN KEY (do_id) REFERENCES DeliveryOrder(id) ON DELETE CASCADE
+);
 
-select * from Users;
+CREATE TABLE DeliveryChallanItems (
+    id varchar(255) PRIMARY KEY DEFAULT gen_random_uuid(),
+    weight int,
+    do_id varchar(255),
+    expectedQuantity int,
+    CONSTRAINT fk_delivery_order FOREIGN KEY (do_id) REFERENCES DeliveryOrder(id) ON DELETE CASCADE
+);
+
+

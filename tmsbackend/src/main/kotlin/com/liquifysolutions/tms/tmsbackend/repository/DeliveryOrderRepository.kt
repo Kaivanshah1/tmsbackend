@@ -76,7 +76,6 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         } catch (e: Exception) {
             throw e
         }
-
     }
 
     fun findById(id: String): DeliveryOrder? {
@@ -147,7 +146,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         }, limit, offset)
     }
 
-    fun update(deliveryOrder: DeliveryOrder): Int {
+    fun update(deliveryOrder: DeliveryOrder): Int? {
         val sql = """
             UPDATE DeliveryOrder SET
                 contractId = ?, partyId = ?, dateOfContract = ?, status = ?,
@@ -170,11 +169,11 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             deliveryOrder.updatedAt,
             deliveryOrder.id
         )
+
     }
 
     fun deleteById(id: String): Int {
         val sql = "DELETE FROM DeliveryOrder WHERE id = ?"
         return jdbcTemplate.update(sql, id)
     }
-
 }

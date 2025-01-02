@@ -26,7 +26,7 @@ class DeliveryOrderService(
         }
 
         deliveryOrderItemRepository.saveAll(itemsToSave, deliveryOrder.id);
-        return 1
+        return findById(deliveryOrder.id)
     }
 
     fun listAllDeliveryOrder(page: Int, size: Int): List<ListDeliveryOrderItem> {
