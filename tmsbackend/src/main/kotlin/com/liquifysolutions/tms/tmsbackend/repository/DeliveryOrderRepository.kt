@@ -7,6 +7,7 @@ import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import java.sql.ResultSet
 
 @Repository
@@ -80,45 +81,46 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 
     fun findById(id: String): DeliveryOrder? {
         // 1. Fetch the DeliveryOrder
-        val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE id = ?"
-        val deliveryOrder = jdbcTemplate.query(deliveryOrderSql, rowMapper, id).firstOrNull() ?: return null
+        try {
+            val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE id = ?"
+            val deliveryOrder = jdbcTemplate.query(deliveryOrderSql, rowMapper, id).firstOrNull() ?: return null
 
-        // 2. Fetch DeliveryOrderItems
-        val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
-        val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
+            // 2. Fetch DeliveryOrderItems
+            val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
+            val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
 
-        // 3. Group into DeliveryOrderSections
-        val deliveryOrderSections = deliveryOrderItems.groupBy { it.district ?: "null_district" }.map { (district, items) ->
-            val actualDistrict = if (district == "null_district") null else district
-            DeliveryOrderSection(
-                district = actualDistrict,
-                totalQuantity = items.sumOf { it.quantity },
-                totalPendingQuantity = items.sumOf { it.pendingQuantity ?: 0 },
-                totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0 },
-                totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0 },
-                status = items.firstOrNull()?.status ?: "",
-                deliveryOrderItems = items
+            // 3. Group into DeliveryOrderSections
+            val deliveryOrderSections =
+                deliveryOrderItems.groupBy { it.district ?: "null_district" }.map { (district, items) ->
+                    val actualDistrict = if (district == "null_district") null else district
+                    DeliveryOrderSection(
+                        district = actualDistrict,
+                        totalQuantity = items.sumOf { it.quantity },
+                        totalPendingQuantity = items.sumOf { it.pendingQuantity ?: 0 },
+                        totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0 },
+                        totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0 },
+                        status = items.firstOrNull()?.status ?: "",
+                        deliveryOrderItems = items
+                    )
+                }
+            // Aggregate totals for grand totals
+            val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity }
+            val grandTotalPendingQuantity = deliveryOrderItems.sumOf { it.pendingQuantity ?: 0 }
+            val grandTotalInProgressQuantity = deliveryOrderItems.sumOf { it.inProgressQuantity ?: 0 }
+            val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0 }
+
+            // 4. Return the DeliveryOrder with sections
+            return deliveryOrder.copy(
+                deliveryOrderSections = deliveryOrderSections,
+                grandTotalQuantity = grandTotalQuantity,
+                grandTotalPendingQuantity = grandTotalPendingQuantity,
+                grandTotalInProgressQuantity = grandTotalInProgressQuantity,
+                grandTotalDeliveredQuantity = grandTotalDeliveredQuantity
             )
+        }catch (e: Exception){
+            throw e;
         }
-        // Aggregate totals for grand totals
-        val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity }
-        val grandTotalPendingQuantity = deliveryOrderItems.sumOf { it.pendingQuantity ?: 0 }
-        val grandTotalInProgressQuantity = deliveryOrderItems.sumOf { it.inProgressQuantity ?: 0 }
-        val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0 }
-
-        // 4. Return the DeliveryOrder with sections
-        return deliveryOrder.copy(deliveryOrderSections = deliveryOrderSections,
-            grandTotalQuantity = grandTotalQuantity,
-            grandTotalPendingQuantity = grandTotalPendingQuantity,
-            grandTotalInProgressQuantity = grandTotalInProgressQuantity,
-            grandTotalDeliveredQuantity = grandTotalDeliveredQuantity
-        )
     }
-
-//    fun findById(id: String): DeliveryOrder? {
-//        val sql = ""
-//        return jdbcTemplate.query(sql, rowMapper, id).firstOrNull()
-//    }
 
     fun findAll(limit: Int, offset: Int): List<ListDeliveryOrderItem> {
         val sql = """
@@ -146,6 +148,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         }, limit, offset)
     }
 
+    @Transactional
     fun update(deliveryOrder: DeliveryOrder): Int? {
         val sql = """
             UPDATE DeliveryOrder SET
@@ -169,7 +172,6 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             deliveryOrder.updatedAt,
             deliveryOrder.id
         )
-
     }
 
     fun deleteById(id: String): Int {

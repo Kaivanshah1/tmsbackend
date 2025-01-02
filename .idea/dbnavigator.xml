@@ -21,6 +21,7 @@
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
     <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/schema.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
+    <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/db/migration/adding_partyname_in_deliveryorder.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />

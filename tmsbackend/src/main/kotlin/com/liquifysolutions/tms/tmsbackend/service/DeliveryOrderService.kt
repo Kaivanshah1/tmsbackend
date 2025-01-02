@@ -13,7 +13,7 @@ class DeliveryOrderService(
     private val deliveryOrderRepository: DeliveryOrderRepository,
     private val deliveryOrderItemRepository: DeliveryOrderItemRepository
 ) {
-    fun createDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): Int{
+    fun createDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): DeliveryOrder? {
 
         deliveryOrderRepository.create(deliveryOrder)
 
@@ -26,7 +26,7 @@ class DeliveryOrderService(
         }
 
         deliveryOrderItemRepository.saveAll(itemsToSave, deliveryOrder.id);
-        return findById(deliveryOrder.id)
+        return deliveryOrderRepository.findById(deliveryOrder.id);
     }
 
     fun listAllDeliveryOrder(page: Int, size: Int): List<ListDeliveryOrderItem> {
@@ -38,7 +38,7 @@ class DeliveryOrderService(
         return deliveryOrderRepository.findById(id)
     }
 
-    fun updateDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): Int {
+    fun updateDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): DeliveryOrder? {
         deliveryOrderRepository.update(deliveryOrder)
         val itemsToSave = sections.flatMap { section ->
             section.deliveryOrderItems?.map { item ->
@@ -47,7 +47,7 @@ class DeliveryOrderService(
         }
 
         deliveryOrderItemRepository.syncItems(itemsToSave, deliveryOrder.id)
-        return 1;
+        return deliveryOrderRepository.findById(deliveryOrder.id);
     }
 
     fun deleteDeliveryOrderById(id: String): Int {

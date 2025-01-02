@@ -22,13 +22,13 @@ class DeliveryOrderController(
     private val deliveryOrderService: DeliveryOrderService
 ) {
     @PostMapping("/create")
-    fun createDeliveryOrder(@RequestBody request: DeliveryOrder): ResponseEntity<Int> {
+    fun createDeliveryOrder(@RequestBody request: DeliveryOrder): ResponseEntity<DeliveryOrder> {
 
         val deliveryOrderSections = request.deliveryOrderSections ?: emptyList();
 
         // Pass the constructed DeliveryOrder and sections to the service
-        val createdDeliveryOrderId = deliveryOrderService.createDeliveryOrder(request, deliveryOrderSections)
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdDeliveryOrderId)
+        val createdDeliveryOrder = deliveryOrderService.createDeliveryOrder(request, deliveryOrderSections)
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdDeliveryOrder)
     }
     @PostMapping("/list")
     fun getAllDeliveryOrder(
@@ -50,17 +50,13 @@ class DeliveryOrderController(
     }
 
     @PostMapping("/update")
-    fun updateDeliveryOrder(@RequestBody deliveryOrder: DeliveryOrder): ResponseEntity<String> {
+    fun updateDeliveryOrder(@RequestBody deliveryOrder: DeliveryOrder): ResponseEntity<DeliveryOrder> {
         val deliveryOrderSections = deliveryOrder.deliveryOrderSections ?: emptyList();
         return try {
-            val rowsUpdated = deliveryOrderService.updateDeliveryOrder(deliveryOrder, deliveryOrderSections)
-            if (rowsUpdated > 0) {
-                ResponseEntity.ok("Delivery order updated successfully.")
-            } else {
-                ResponseEntity.badRequest().body("Failed to update delivery order.")
-            }
+            val updatedObject = deliveryOrderService.updateDeliveryOrder(deliveryOrder, deliveryOrderSections)
+            ResponseEntity.ok(updatedObject);
         } catch (e: Exception) {
-            ResponseEntity.internalServerError().body("An error occurred: ${e.message}")
+           throw e;
         }
     }
 
