@@ -26,13 +26,27 @@ data class DeliveryOrderItem(
     val locationId: String?,
     val materialId: String?,
     val quantity: Int,
-    val pendingQuantity: Int? = 0,
-    val deliveredQuantity: Int? = 0,
-    val inProgressQuantity: Int? = 0,
+    var pendingQuantity: Int? = 0,
+    var deliveredQuantity: Int? = 0,
+    var inProgressQuantity: Int? = 0,
     val rate: Double?,
     val unit: String?,
     val dueDate: Long?,
     val status: String
+)
+
+data class DeliveryOrderItemMetaData(
+    val id: String,
+    val district: String?,
+    val taluka: String?,
+    val locationName: String?,
+    val materialName: String?,
+    val quantity: Int,
+    val dueDate: Long?,
+    val rate: Double,
+    val status: String,
+    var deliveredQuantity: Double? = 0.0,
+    var inProgressQuantity: Double? = 0.0,
 )
 
 data class DeliveryOrderSection(

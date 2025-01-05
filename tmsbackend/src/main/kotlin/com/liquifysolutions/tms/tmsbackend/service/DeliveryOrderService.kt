@@ -1,9 +1,6 @@
 package com.liquifysolutions.tms.tmsbackend.service
 
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderSection
-import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
+import com.liquifysolutions.tms.tmsbackend.model.*
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderItemRepository
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderRepository
 import org.springframework.stereotype.Service
@@ -32,6 +29,10 @@ class DeliveryOrderService(
     fun listAllDeliveryOrder(page: Int, size: Int): List<ListDeliveryOrderItem> {
         val offset = (page - 1) * size
         return deliveryOrderRepository.findAll(size, offset)
+    }
+
+    fun listAllDeliveryOrderItems(deliveryOrderId: String): List<DeliveryOrderItemMetaData>{
+        return deliveryOrderRepository.getDeliveryOrderItemById(deliveryOrderId)
     }
 
     fun getDeliverOrderById(id: String): DeliveryOrder?{

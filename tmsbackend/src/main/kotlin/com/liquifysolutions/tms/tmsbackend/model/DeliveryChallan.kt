@@ -27,3 +27,10 @@ data class DeliveryChallanItem(
     val dueDate: Long? = null,
     val deliveringQuantity: Double = 0.0
 )
+
+data class ListDeliveryChallansInput(
+    val search: String? = null,
+    val page: Int? = 0,
+    val size: Int? = 10,
+    val deliveryOrderIds: List<String>? = null
+)

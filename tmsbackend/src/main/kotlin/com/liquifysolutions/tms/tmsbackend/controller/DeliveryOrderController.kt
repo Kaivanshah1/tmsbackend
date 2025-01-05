@@ -1,6 +1,7 @@
 package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
+import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItemMetaData
 import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
 import com.liquifysolutions.tms.tmsbackend.service.DeliveryOrderService
 import org.springframework.http.HttpStatus
@@ -37,6 +38,11 @@ class DeliveryOrderController(
     ): ResponseEntity<List<ListDeliveryOrderItem>> {
         val deliveryOrders = deliveryOrderService.listAllDeliveryOrder(page, size)
         return ResponseEntity.status(HttpStatus.OK).body(deliveryOrders)
+    }
+
+    @GetMapping("/list/delivery-order-items/{id}")
+    fun getAllDeliveryItems(@PathVariable id: String): List<DeliveryOrderItemMetaData>{
+        return deliveryOrderService.listAllDeliveryOrderItems(id)
     }
 
     @GetMapping("/get/{id}")

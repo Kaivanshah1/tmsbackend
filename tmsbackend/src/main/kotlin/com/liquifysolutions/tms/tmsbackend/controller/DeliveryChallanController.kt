@@ -2,6 +2,8 @@ package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.service.DeliveryChallanService
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallan
+import org.springframework.web.bind.annotation.RequestBody;
+import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryChallansInput
 import org.springframework.web.bind.annotation.*
 
 @CrossOrigin
@@ -11,8 +13,8 @@ class DeliveryChallanController(
     private val deliveryChallanService: DeliveryChallanService
 ) {
     @PostMapping("/list")
-    fun getAllDeliveryChallans(): List<DeliveryChallan> {
-        return deliveryChallanService.getAllDeliveryChallans()
+    fun getAllDeliveryChallans(@RequestBody request: ListDeliveryChallansInput): List<DeliveryChallan> {
+        return deliveryChallanService.getAllDeliveryChallans(request)
     }
 
     @GetMapping("/get/{id}")

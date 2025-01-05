@@ -1,9 +1,6 @@
 package com.liquifysolutions.tms.tmsbackend.repository
 
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrder
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderSection
-import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryOrderItem
+import com.liquifysolutions.tms.tmsbackend.model.*
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
@@ -47,8 +44,98 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         )
     }
 
+    private val deliveryOrderItemMetaDataMapper = RowMapper { rs: ResultSet, _: Int ->
+        DeliveryOrderItemMetaData(
+            id = rs.getString("id"),
+            district = rs.getString("district"),
+            taluka = rs.getString("taluka"),
+            locationName = rs.getString("locationName"),
+            materialName = rs.getString("materialName"),
+            quantity = rs.getInt("quantity"),
+            status = rs.getString("status"),
+            rate = rs.getDouble("rate"),
+            dueDate = rs.getLong("duedate"),
+        )
+    }
+
     fun getDeliveryOrderSections(deliveryOrderId: String): List<DeliveryOrderSection> {
         return emptyList()
+    }
+
+    fun getDeliveryOrderItemById(deliveryOrderId: String): List<DeliveryOrderItemMetaData> {
+        return try {
+            val sql = """
+            select 
+                doi.id,
+                doi.district,
+                doi.taluka,
+                doi.quantity,
+                doi.status,
+                doi.rate,
+                doi.duedate,
+                m.name as materialName,
+                lo.name as locationName
+            from deliveryorderitem as doi
+            join location as lo on lo.id = doi.locationid
+            join material as m on m.id = doi.materialid
+            where doi.deliveryorderid = ?
+        """.trimIndent()
+
+            val items = jdbcTemplate.query(sql, deliveryOrderItemMetaDataMapper, deliveryOrderId)
+
+            // Fetch related DeliveryChallanItems and calculate delivered and inProgress quantities
+            items.forEach { item ->
+                calculateDeliveredAndInProgressQuantities(item)
+            }
+
+            return items
+        } catch (e: Exception) {
+            throw e;
+        }
+    }
+
+    private fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItemMetaData) {
+        println("Calculating quantities for DeliveryOrderItem ID: ${item.id}")
+
+        val challanItemsSql = """
+            SELECT
+                dc.status,
+                dci.deliveringquantity
+            FROM deliverychallanitems as dci
+            JOIN deliverychallan as dc ON dci.deliverychallanid = dc.id
+            WHERE dci.deliveryorderitemid = ?
+        """.trimIndent()
+
+        val deliveryChallanItems = jdbcTemplate.query(
+            challanItemsSql,
+            { rs, _ ->
+                object {
+                    val status = rs.getString("status")
+                    val deliveringQuantity = rs.getDouble("deliveringquantity")
+                }
+            }, item.id
+        )
+        println("Number of deliveryChallanItems found: ${deliveryChallanItems.size}")
+
+
+        var totalDeliveredQuantity = 0.0
+        var totalInProgressQuantity = 0.0
+
+        deliveryChallanItems.forEach {
+            println("ChallanItem status: ${it.status}, deliveringQuantity: ${it.deliveringQuantity}")
+            when (it.status) {
+                "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity
+                "IN_PROGRESS" -> totalInProgressQuantity += it.deliveringQuantity
+                "pending" -> totalInProgressQuantity += it.deliveringQuantity  // Treat "pending" as in-progress
+            }
+        }
+
+        println("Total Delivered Quantity : ${totalDeliveredQuantity}")
+        println("Total InProgress Quantity : ${totalInProgressQuantity}")
+
+
+        item.deliveredQuantity = totalDeliveredQuantity
+        item.inProgressQuantity = totalInProgressQuantity
     }
 
     fun create(deliveryOrder: DeliveryOrder): Int {
@@ -80,16 +167,17 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun findById(id: String): DeliveryOrder? {
-        // 1. Fetch the DeliveryOrder
         try {
             val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE id = ?"
             val deliveryOrder = jdbcTemplate.query(deliveryOrderSql, rowMapper, id).firstOrNull() ?: return null
 
-            // 2. Fetch DeliveryOrderItems
             val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
             val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
 
-            // 3. Group into DeliveryOrderSections
+            deliveryOrderItems.forEach{ item ->
+                calculateDeliveredAndInProgressQuantities(item)
+            }
+
             val deliveryOrderSections =
                 deliveryOrderItems.groupBy { it.district ?: "null_district" }.map { (district, items) ->
                     val actualDistrict = if (district == "null_district") null else district
@@ -97,19 +185,18 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                         district = actualDistrict,
                         totalQuantity = items.sumOf { it.quantity },
                         totalPendingQuantity = items.sumOf { it.pendingQuantity ?: 0 },
-                        totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0 },
+                        totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0},
                         totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0 },
                         status = items.firstOrNull()?.status ?: "",
                         deliveryOrderItems = items
                     )
                 }
-            // Aggregate totals for grand totals
+
             val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity }
             val grandTotalPendingQuantity = deliveryOrderItems.sumOf { it.pendingQuantity ?: 0 }
             val grandTotalInProgressQuantity = deliveryOrderItems.sumOf { it.inProgressQuantity ?: 0 }
             val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0 }
 
-            // 4. Return the DeliveryOrder with sections
             return deliveryOrder.copy(
                 deliveryOrderSections = deliveryOrderSections,
                 grandTotalQuantity = grandTotalQuantity,
@@ -120,6 +207,49 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         }catch (e: Exception){
             throw e;
         }
+    }
+
+    fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItem) {
+        println("Calculating quantities for DeliveryOrderItem ID: ${item.id}")
+        val challanItemsSql = """
+            SELECT
+                dc.status,
+                dci.deliveringquantity
+            FROM deliverychallanitems as dci
+            JOIN deliverychallan as dc ON dci.deliverychallanid = dc.id
+            WHERE dci.deliveryorderitemid = ?
+        """.trimIndent()
+
+        val deliveryChallanItems = jdbcTemplate.query(
+            challanItemsSql,
+            { rs, _ ->
+                object {
+                    val status = rs.getString("status")
+                    val deliveringQuantity = rs.getDouble("deliveringquantity")
+                }
+            }, item.id
+        )
+        println("Number of deliveryChallanItems found: ${deliveryChallanItems.size}")
+
+
+        var totalDeliveredQuantity = 0.0
+        var totalInProgressQuantity = 0.0
+
+        deliveryChallanItems.forEach {
+            println("ChallanItem status: ${it.status}, deliveringQuantity: ${it.deliveringQuantity}")
+            when (it.status) {
+                "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity
+                "IN_PROGRESS" -> totalInProgressQuantity += it.deliveringQuantity
+                "pending" -> totalInProgressQuantity += it.deliveringQuantity  // Treat "pending" as in-progress
+            }
+        }
+        println("Total Delivered Quantity : ${totalDeliveredQuantity}")
+        println("Total InProgress Quantity : ${totalInProgressQuantity}")
+
+
+        item.deliveredQuantity = totalDeliveredQuantity.toInt()
+        item.inProgressQuantity = totalInProgressQuantity.toInt()
+        item.pendingQuantity = item.quantity - (totalDeliveredQuantity.toInt() + totalInProgressQuantity.toInt())
     }
 
     fun findAll(limit: Int, offset: Int): List<ListDeliveryOrderItem> {

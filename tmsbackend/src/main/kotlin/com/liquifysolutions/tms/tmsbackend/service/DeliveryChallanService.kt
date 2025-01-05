@@ -1,7 +1,7 @@
 package com.liquifysolutions.tms.tmsbackend.service
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallan
-import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallanItem
+import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryChallansInput
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryChallanRepository
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderItemRepository
 import org.springframework.stereotype.Service
@@ -14,8 +14,8 @@ class DeliveryChallanService(
     private val deliveryChallanRepository: DeliveryChallanRepository,
     private val deliveryOrderItemRepository: DeliveryOrderItemRepository
 ) {
-    fun getAllDeliveryChallans(): List<DeliveryChallan> {
-        return deliveryChallanRepository.listAll()
+    fun getAllDeliveryChallans(request: ListDeliveryChallansInput): List<DeliveryChallan>{
+        return deliveryChallanRepository.listAll(request)
     }
 
     fun getDeliveryChallanById(id: String): DeliveryChallan? {
@@ -36,18 +36,24 @@ class DeliveryChallanService(
 
     @Transactional
     fun updateDeliveryChallan(deliveryChallan: DeliveryChallan): DeliveryChallan? {
-        val existingChallan = deliveryChallanRepository.getById(deliveryChallan.id!!)
-        if(existingChallan == null){
-            throw  RuntimeException("Delivery Challan not found with id ${deliveryChallan.id}")
+        if(deliveryChallan.id == null){
+            throw IllegalArgumentException("Delivery Challan Id not found");
         }
-        val updatedChallan = deliveryChallan.copy(updatedAt = Instant.now().toEpochMilli()) // Correct way to update updatedAt
-        val updatedRows =  deliveryChallanRepository.updateWithItems(updatedChallan)
-        if(updatedRows <= 0){
-            throw  RuntimeException("Error updating delivery challan with id ${deliveryChallan.id}")
-        }
-        return deliveryChallanRepository.getById(deliveryChallan.id)
-    }
 
+        val existingChallan = deliveryChallanRepository.getById(deliveryChallan.id)
+        if (existingChallan == null) {
+            throw IllegalArgumentException("Delivery challan not found")
+        }
+
+        val deliveryChallanToUpdate = deliveryChallan.copy(
+            deliveryChallanItems = deliveryChallan.deliveryChallanItems.map {
+                it.takeUnless { it.id == null } ?: it.copy(id = UUID.randomUUID().toString())
+            },
+            updatedAt = Instant.now().epochSecond
+        )
+
+        return deliveryChallanRepository.update(deliveryChallanToUpdate)
+    }
 
     fun findDeliveryChallanById(id:String) : DeliveryChallan?{
         return deliveryChallanRepository.getById(id)

@@ -2,6 +2,7 @@ package com.liquifysolutions.tms.tmsbackend.repository
 
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallan
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallanItem
+import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryChallansInput
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
 import org.springframework.stereotype.Repository
@@ -40,7 +41,8 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
             deliveringQuantity = rs.getDouble("deliveringQuantity")
         )
     }
-    fun update(deliveryChallan: DeliveryChallan): Int {
+
+    fun update(deliveryChallan: DeliveryChallan): DeliveryChallan {
         try {
             val sql = """
             UPDATE deliverychallan
@@ -54,7 +56,7 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
 
             val currentTime = Instant.now().toEpochMilli()
 
-            return jdbcTemplate.update(
+            jdbcTemplate.update(
                 sql,
                 deliveryChallan.dateOfChallan,
                 deliveryChallan.status,
@@ -62,121 +64,199 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
                 currentTime,
                 deliveryChallan.id
             )
-        }catch (e : Exception){
+
+            val existingItems = getItemsByChallanId(deliveryChallan.id!!)
+            val newItems = deliveryChallan.deliveryChallanItems
+
+            val existingItemIds = existingItems.mapNotNull { it.id }.toSet()
+            val newItemIds = newItems.mapNotNull { it.id }.toSet()
+
+            val itemsToCreate = newItems.filter { it.id == null || !existingItemIds.contains(it.id) }
+            val itemsToUpdate = newItems.filter { it.id != null && existingItemIds.contains(it.id) }
+            val itemsToDelete = existingItems.filter { it.id != null && !newItemIds.contains(it.id) }
+
+            // Delete removed items
+            if (itemsToDelete.isNotEmpty()) {
+                val deleteSql = """
+                    DELETE FROM deliverychallanitems
+                    WHERE id = ?
+                """.trimIndent()
+                itemsToDelete.forEach { item ->
+                    jdbcTemplate.update(deleteSql, item.id)
+                }
+            }
+
+            // Update existing items
+            val updateItemSql = """
+                UPDATE deliverychallanitems
+                SET
+                    deliveringquantity = ?
+                WHERE id = ?
+            """.trimIndent()
+
+            itemsToUpdate.forEach { item ->
+                jdbcTemplate.update(
+                    updateItemSql,
+                    item.deliveringQuantity,
+                    item.id
+                )
+            }
+
+            // Create new items
+            itemsToCreate.forEach { item ->
+                createItem(item)
+            }
+
+            return deliveryChallan
+        }catch (e: Exception){
             throw e;
         }
     }
 
-    fun updateWithItems(deliveryChallan: DeliveryChallan): Int {
-        val challanUpdateCount = update(deliveryChallan)
+    val sql = """
+        SELECT
+            dc.id,
+            dc.deliveryorderid,
+            dc.dateofchallan,
+            dc.status,
+            p.name AS partyname,
+            dc.totaldeliveringquantity,
+            dc.createdat,
+            dc.updatedat,
+            dci.id as item_id,
+            dci.deliverychallanid,
+            dci.deliveryorderitemid,
+            dci.district,
+            dci.taluka,
+            dci.locationname,
+            dci.materialname,
+            dci.quantity,
+            dci.rate,
+            dci.duedate,
+            dci.deliveringquantity
+        FROM deliverychallan dc
+        JOIN deliveryorder d_orders ON dc.deliveryorderid = d_orders.id
+        JOIN party p ON d_orders.partyid = p.id
+        LEFT JOIN deliverychallanitems dci ON dc.id = dci.deliverychallanid
+        WHERE dc.id = ?
+    """.trimIndent()
 
-        if(challanUpdateCount > 0){
-
-            val currentItems =   getItemsByChallanId(deliveryChallan.id!!);
-            val updatedItems = deliveryChallan.deliveryChallanItems ?: emptyList()
-
-            val itemsToDelete = currentItems.filterNot { currentItem ->  updatedItems.any { it.id == currentItem.id }}
-
-            itemsToDelete.forEach{
-                deleteItem(it)
-            }
-
-            updatedItems.forEach{ item ->
-                if (currentItems.any { currentItem -> currentItem.id == item.id }) {
-                    updateItem(item)
-                } else {
-                    createItem(item.copy(deliveryChallanId = deliveryChallan.id))
-                }
-            }
-            return challanUpdateCount;
-        }else{
-            return challanUpdateCount
-        }
-
-    }
-
-    private fun insertItem(item:DeliveryChallanItem) : Int{
-
-        val sql = """
-            INSERT INTO DeliveryChallanItems 
-            (id, deliveryChallanId, deliveryOrderItemId, district, taluka, locationName, materialName, quantity, rate, dueDate, deliveringQuantity) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
-
-        return jdbcTemplate.update(
-            sql,
-            item.id,
-            item.deliveryChallanId,
-            item.deliveryOrderItemId,
-            item.district,
-            item.taluka,
-            item.locationName,
-            item.materialName,
-            item.quantity,
-            item.rate,
-            item.dueDate,
-            item.deliveringQuantity
-        )
-
-    }
-
-
-    private fun updateItem(item:DeliveryChallanItem) : Int{
-        val sql = """
-            UPDATE DeliveryChallanItems
-            SET
-                deliveryOrderItemId = ?,
-                district = ?,
-                taluka = ?,
-                locationName = ?,
-                materialName = ?,
-                quantity = ?,
-                rate = ?,
-                dueDate = ?,
-                deliveringQuantity = ?
-            WHERE id = ?
-        """
-        return jdbcTemplate.update(
-            sql,
-            item.deliveryOrderItemId,
-            item.district,
-            item.taluka,
-            item.locationName,
-            item.materialName,
-            item.quantity,
-            item.rate,
-            item.dueDate,
-            item.deliveringQuantity,
-            item.id
-        )
-
-    }
-
-    private fun deleteItem(item:DeliveryChallanItem):Int {
-        val sql = "DELETE FROM DeliveryChallanItems WHERE id = ?"
-        return jdbcTemplate.update(sql,item.id)
-
-    }
     fun getById(id: String): DeliveryChallan? {
-        val sql = """ 
-                SELECT 
-                dc.*, 
-                p.name AS partyname 
-            FROM 
-                deliverychallan AS dc
-            JOIN 
-                deliveryorder AS d_orders ON dc.deliveryorderid = d_orders.id
-            JOIN 
-                party AS p ON d_orders.partyid = p.id
-			WHERE dc.id = ?
-        """.trimIndent()
-        return jdbcTemplate.query(sql, deliveryChallanRowMapper, id).firstOrNull()
+        return try {
+            jdbcTemplate.query(sql, { rs, _ ->
+                ChallanRow(
+                    challanId = rs.getString("id"),
+                    deliveryOrderId = rs.getString("deliveryorderid"),
+                    dateOfChallan = rs.getLong("dateofchallan"),
+                    status = rs.getString("status"),
+                    partyName = rs.getString("partyname"),
+                    totalDeliveringQuantity = rs.getDouble("totaldeliveringquantity"),
+                    createdAt = rs.getLong("createdat"),
+                    updatedAt = rs.getLong("updatedat"),
+                    itemId = rs.getString("item_id"), // Handle potential NULL
+                    district = rs.getString("district"), // Handle potential NULL
+                    taluka = rs.getString("taluka"), // Handle potential NULL
+                    locationName = rs.getString("locationname"), // Handle potential NULL
+                    materialName = rs.getString("materialname"), // Handle potential NULL
+                    quantity = rs.getDouble("quantity"),
+                    rate = rs.getDouble("rate"),
+                    dueDate = rs.getLong("duedate"),
+                    deliveringQuantity = rs.getDouble("deliveringquantity"),
+                    deliveryOrderItemId = rs.getString("deliveryorderitemid")
+                )
+            }, id)
+                .takeIf { it.isNotEmpty() }
+                ?.let { rows ->
+                    val firstRow = rows.first()
+                    DeliveryChallan(
+                        id = firstRow.challanId,
+                        deliveryOrderId = firstRow.deliveryOrderId,
+                        dateOfChallan = firstRow.dateOfChallan,
+                        status = firstRow.status,
+                        partyName = firstRow.partyName,
+                        totalDeliveringQuantity = firstRow.totalDeliveringQuantity,
+                        createdAt = firstRow.createdAt,
+                        updatedAt = firstRow.updatedAt,
+                        deliveryChallanItems = rows.map { row ->
+                            DeliveryChallanItem(
+                                id = row.itemId,
+                                deliveryChallanId = row.challanId,
+                                deliveryOrderItemId = row.deliveryOrderItemId,
+                                district = row.district,
+                                taluka = row.taluka,
+                                locationName = row.locationName,
+                                materialName = row.materialName,
+                                quantity = row.quantity,
+                                rate = row.rate,
+                                dueDate = row.dueDate,
+                                deliveringQuantity = row.deliveringQuantity
+                            )
+                        }
+                    )
+                }
+        } catch (e: Exception) {
+            // Log the error for debugging (optional)
+            println("Error fetching DeliveryChallan: ${e.message}")
+            throw e // Re-throw the exception for higher-level handling
+        }
     }
 
 
-    fun listAll(): List<DeliveryChallan> {
-        val sql = "SELECT * FROM DeliveryChallan"
-        return jdbcTemplate.query(sql, deliveryChallanRowMapper)
+    private data class ChallanRow(
+        val challanId: String,
+        val deliveryOrderId: String,
+        val dateOfChallan: Long,
+        val status: String,
+        val partyName: String,
+        val totalDeliveringQuantity: Double,
+        val createdAt: Long,
+        val updatedAt: Long,
+        val itemId: String,
+        val district: String?,
+        val taluka: String?,
+        val locationName: String?,
+        val materialName: String?,
+        val quantity: Double,
+        val rate: Double,
+        val dueDate: Long?,
+        val deliveringQuantity: Double,
+        val deliveryOrderItemId: String?
+    )
+
+
+    fun listAll(request: ListDeliveryChallansInput): List<DeliveryChallan> {
+        try {
+            val page = request.page ?: 1
+            val size = request.size ?: 10
+            val offset = (page - 1) * size
+
+            val sql = """
+            SELECT 
+                dc.*,
+                p.name as partyName
+            FROM deliverychallan as dc
+            JOIN deliveryorder as d ON dc.deliveryorderid = d.id
+            JOIN party as p ON d.partyid = p.id
+            ORDER BY dc.createdat DESC
+            LIMIT ? OFFSET ?
+        """.trimIndent()
+
+            return jdbcTemplate.query(sql, { rs, _ ->
+                DeliveryChallan(
+                    id = rs.getString("id"),
+                    deliveryOrderId = rs.getString("deliveryorderid"),
+                    dateOfChallan = rs.getLong("dateofchallan"),
+                    status = rs.getString("status"),
+                    totalDeliveringQuantity = rs.getDouble("totaldeliveringquantity"),
+                    createdAt = rs.getLong("createdAt"),
+                    updatedAt = rs.getLong("updatedAt"),
+                    partyName = rs.getString("partyName")
+                )
+            }, size, offset)
+        }catch (e: Exception){
+            println("Error while fetching delivery challan $e")
+            return emptyList()
+        }
     }
 
     fun create(deliveryChallan: DeliveryChallan): Int {
@@ -229,40 +309,7 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
         }
     }
 
-    fun createItems(deliveryChallanItems: List<DeliveryChallanItem>): Int {
-        if (deliveryChallanItems.isEmpty()) return 0
-
-        val sql = """
-        INSERT INTO DeliveryChallanItems 
-        (id, deliveryChallanId, deliveryOrderItemId, district, taluka, locationName, materialName, quantity, rate, dueDate, deliveringQuantity) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """
-
-        return try {
-            deliveryChallanItems.forEach { item ->
-                jdbcTemplate.update(
-                    sql,
-                    item.id,
-                    item.deliveryChallanId,
-                    item.deliveryOrderItemId,
-                    item.district,
-                    item.taluka,
-                    item.locationName,
-                    item.materialName,
-                    item.quantity,
-                    item.rate,
-                    item.dueDate,
-                    item.deliveringQuantity
-                )
-            }
-            deliveryChallanItems.size
-        } catch (e: Exception) {
-            // Handle the exception, e.g., log it
-            throw e
-        }
-    }
-
-    private fun getItemsByChallanId(challanId: String): List<DeliveryChallanItem> {
+    fun getItemsByChallanId(challanId: String): List<DeliveryChallanItem> {
         val sql = "SELECT * FROM DeliveryChallanItems WHERE deliveryChallanId = ?"
         return jdbcTemplate.query(sql, deliveryChallanItemRowMapper, challanId)
     }

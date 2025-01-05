@@ -19,7 +19,7 @@ class MaterialRepository(private val jdbcTemplate: JdbcTemplate) {
 
     // Create
     fun create(material: Material): Int {
-        val sql = "INSERT INTO materials (id, name) VALUES (?, ?)"
+        val sql = "INSERT INTO material (id, name) VALUES (?, ?)"
         return jdbcTemplate.update(
             sql,
             material.id ?: UUID.randomUUID().toString(),
@@ -29,25 +29,25 @@ class MaterialRepository(private val jdbcTemplate: JdbcTemplate) {
 
     // Read by ID
     fun findById(id: String): Material? {
-        val sql = "SELECT * FROM materials WHERE id = ?"
+        val sql = "SELECT * FROM material WHERE id = ?"
         return jdbcTemplate.queryForObject(sql, rowMapper, id)
     }
 
     // Read all
     fun findAll(): List<Material> {
-        val sql = "SELECT * FROM materials"
+        val sql = "SELECT * FROM material"
         return jdbcTemplate.query(sql, rowMapper)
     }
 
     // Update
     fun update(material: Material): Int {
-        val sql = "UPDATE materials SET name = ? WHERE id = ?"
+        val sql = "UPDATE material SET name = ? WHERE id = ?"
         return jdbcTemplate.update(sql, material.name, material.id)
     }
 
     // Delete
     fun deleteById(id: String): Int {
-        val sql = "DELETE FROM materials WHERE id = ?"
+        val sql = "DELETE FROM material WHERE id = ?"
         return jdbcTemplate.update(sql, id)
     }
 }

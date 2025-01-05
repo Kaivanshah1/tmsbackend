@@ -97,7 +97,6 @@ CREATE TABLE DeliveryChallan (
     deliveryOrderId VARCHAR(255) NULL,
     dateOfChallan BIGINT NULL,
     status VARCHAR(255) NULL,
-    partyName VARCHAR(255) NULL,
     totalDeliveringQuantity FLOAT DEFAULT 0.0,
     createdAt BIGINT NULL,
     updatedAt BIGINT NULL
