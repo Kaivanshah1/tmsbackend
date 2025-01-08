@@ -16,15 +16,16 @@ class EmployeeRepository(private val jdbcTemplate: JdbcTemplate) {
             email = rs.getString("email"),
             contactNumber = rs.getString("contactNumber"),
             role = rs.getString("role"),
-            createdAt = rs.getLong("createdAt")
+            createdAt = rs.getLong("createdAt"),
+            status = rs.getString("status"),
         )
     }
 
     // Create
     fun create(employee: Employee): Int {
         val sql = """
-            INSERT INTO employees (id, name, email, contactNumber, role, createdAt)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO employees (id, name, email, contactNumber, role, createdAt, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
     """
         return jdbcTemplate.update(
             sql,
@@ -33,7 +34,8 @@ class EmployeeRepository(private val jdbcTemplate: JdbcTemplate) {
             employee.email,
             employee.contactNumber,
             employee.role,
-            employee.createdAt
+            employee.createdAt,
+            employee.status
         )
     }
 
@@ -43,11 +45,42 @@ class EmployeeRepository(private val jdbcTemplate: JdbcTemplate) {
         return jdbcTemplate.queryForObject(sql, rowMapper, id)
     }
 
-    fun findAll(): List<Employee> {
-        val sql = "SELECT * FROM employees"
-        return jdbcTemplate.query(sql, rowMapper)
-    }
+    fun findAll(
+        search: String?,
+        roles: List<String>?,
+        statuses: List<String>?,
+        page: Int,
+        size: Int
+    ): List<Employee> {
+        val baseSql = StringBuilder("SELECT id, name, email, contactNumber, role, createdat, status FROM employees WHERE 1=1")
+        val params = mutableListOf<Any>()
 
+        // Add search condition
+        if (!search.isNullOrBlank()) {
+            baseSql.append(" AND name ILIKE ?")
+            params.add("%$search%")
+        }
+
+        // Add roles filter
+        if (!roles.isNullOrEmpty()) {
+            baseSql.append(" AND role IN (${roles.joinToString { "?" }})")
+            params.addAll(roles)
+        }
+
+        // Add statuses filter
+        if (!statuses.isNullOrEmpty()) {
+            baseSql.append(" AND status IN (${statuses.joinToString { "?" }})")
+            params.addAll(statuses)
+        }
+
+        // Add pagination
+        baseSql.append(" LIMIT ? OFFSET ?")
+        params.add(size)
+        params.add((page - 1) * size)
+
+        // Execute query
+        return jdbcTemplate.query(baseSql.toString(), params.toTypedArray(), rowMapper)
+    }
     // Update
     fun update(employee: Employee): Int {
         val sql = """
@@ -64,6 +97,15 @@ class EmployeeRepository(private val jdbcTemplate: JdbcTemplate) {
             employee.createdAt,
             employee.id
         )
+    }
+
+    fun deactivateEmployee(employeeId: String): Int {
+        try {
+            val sql = "UPDATE employees SET status = 'inactive' WHERE id = ?"
+            return jdbcTemplate.update(sql, employeeId)
+        }catch (e: Exception){
+            throw e;
+        }
     }
 
     // Delete

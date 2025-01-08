@@ -117,4 +117,5 @@ CREATE TABLE DeliveryChallanItems (
     CONSTRAINT fk_delivery_challan FOREIGN KEY (deliveryChallanId) REFERENCES DeliveryChallan(id) ON DELETE CASCADE
 );
 
-
+alter table party
+add column status varchar(255) default 'active' not null;

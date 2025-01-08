@@ -1,1 +1,0 @@
-ALTER TABLE DeliveryOrder ADD COLUMN partyname VARCHAR(255);

@@ -3,8 +3,8 @@ package com.liquifysolutions.tms.tmsbackend.model
 import java.util.UUID
 
 data class DeliveryChallan(
-    val id: String? = UUID.randomUUID().toString(),
-    val deliveryOrderId: String,
+    val id: String?,
+    val do_number: String,
     val dateOfChallan: Long? = null,
     val status: String? = null,
     val partyName: String? = null,
@@ -16,7 +16,7 @@ data class DeliveryChallan(
 
 data class DeliveryChallanItem(
     val id: String? = UUID.randomUUID().toString(),
-    val deliveryChallanId: String? = null,
+    val dc_number: String? = null,
     val deliveryOrderItemId: String? = null,
     val district: String?,
     val taluka: String?,

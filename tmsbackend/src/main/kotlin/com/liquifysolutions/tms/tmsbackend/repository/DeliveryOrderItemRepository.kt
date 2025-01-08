@@ -12,30 +12,29 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
     private val rowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryOrderItem(
             id = rs.getString("id"),
-            deliveryOrderId = rs.getString("deliveryOrderId"),
+            do_number = rs.getString("do_number"),
             district = rs.getString("district"),
             taluka = rs.getString("taluka"),
-            locationId = rs.getString("locationId"),
-            materialId = rs.getString("materialId"),
-            quantity = rs.getInt("quantity"),
+            locationId = rs.getString("locationid"),
+            materialId = rs.getString("materialid"),
+            quantity = rs.getDouble("quantity"),
             rate = rs.getDouble("rate").takeIf { !rs.wasNull() },
             unit = rs.getString("unit"),
-            dueDate = rs.getLong("dueDate").takeIf { !rs.wasNull() },
-            status = rs.getString("status")
+            dueDate = rs.getLong("duedate").takeIf { !rs.wasNull() }
         )
     }
 
     fun create(deliveryOrderItem: DeliveryOrderItem): Int {
         val sql = """
             INSERT INTO DeliveryOrderItem (
-                id, deliveryOrderId, district, taluka, locationId, materialId, quantity,
-               rate, unit, dueDate, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, do_number, district, taluka, locationid, materialid, quantity,
+               rate, unit, duedate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         return jdbcTemplate.update(
             sql,
             deliveryOrderItem.id,
-            deliveryOrderItem.deliveryOrderId,
+            deliveryOrderItem.do_number,
             deliveryOrderItem.district,
             deliveryOrderItem.taluka,
             deliveryOrderItem.locationId,
@@ -44,7 +43,6 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
             deliveryOrderItem.rate,
             deliveryOrderItem.unit,
             deliveryOrderItem.dueDate,
-            deliveryOrderItem.status
         )
     }
 
@@ -52,16 +50,16 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
         if (items.isEmpty()) return
         val sql = """
             INSERT INTO DeliveryOrderItem (
-                id, deliveryOrderId, district, taluka, locationId, materialId, quantity,
-               rate, unit, dueDate, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, do_number, district, taluka, locationid, materialid, quantity,
+               rate, unit, duedate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
         try {
             items.forEach { item ->
                 jdbcTemplate.update(
                     sql,
                     item.id,
-                    item.deliveryOrderId,
+                    item.do_number,
                     item.district,
                     item.taluka,
                     item.locationId,
@@ -70,7 +68,6 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
                     item.rate ?: 0.0,
                     item.unit,
                     item.dueDate ?: 0,
-                    item.status
                 )
             }
         } catch (e: Exception) {
@@ -79,16 +76,16 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getExistingItems(deliveryOrderId: String): List<DeliveryOrderItem> {
-        val sql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
+        val sql = "SELECT * FROM DeliveryOrderItem WHERE do_number = ?"
         return jdbcTemplate.query(sql, rowMapper, deliveryOrderId)
     }
 
     fun saveAll(items: List<DeliveryOrderItem>, deliveryOrderId: String) {
         val sql = """
             INSERT INTO DeliveryOrderItem (
-                id, deliveryOrderId, district, taluka, locationId, materialId, quantity,
-               rate, unit, dueDate, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                id, do_number, district, taluka, locationid, materialid, quantity,
+               rate, unit, duedate
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         try {
@@ -96,7 +93,7 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
                 jdbcTemplate.update(
                     sql,
                     item.id,
-                    item.deliveryOrderId,
+                    item.do_number,
                     item.district,
                     item.taluka,
                     item.locationId,
@@ -105,7 +102,6 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
                     item.rate ?: 0.0,
                     item.unit,
                     item.dueDate ?: 0,
-                    item.status
                 )
             }
         } catch (e: Exception) {
@@ -113,24 +109,23 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
         }
     }
 
-    private fun updateItems(items: List<DeliveryOrderItem>) {
+     fun updateItems(items: List<DeliveryOrderItem>) {
+        try {
         if (items.isEmpty()) return
         val sql = """
         UPDATE DeliveryOrderItem 
         SET 
             district = ?, 
             taluka = ?, 
-            locationId = ?, 
-            materialId = ?, 
+            locationid = ?, 
+            materialid = ?, 
             quantity = ?, 
             rate = ?, 
             unit = ?, 
-            dueDate = ?, 
-            status = ?
-        WHERE id = ? AND deliveryOrderId = ?
+            duedate = ?
+        WHERE id = ? AND do_number = ?
     """
 
-        try {
             items.forEach { item ->
                 jdbcTemplate.update(
                     sql,
@@ -142,9 +137,8 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
                     item.rate ?: 0,
                     item.unit,
                     item.dueDate ?: 0,
-                    item.status,
                     item.id,
-                    item.deliveryOrderId
+                    item.do_number
                 )
             }
         } catch (e: Exception) {
@@ -170,11 +164,11 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
                     materialId = item.materialId ?: existingItem.materialId,
                     unit = item.unit ?: existingItem.unit,
                     dueDate = item.dueDate ?: existingItem.dueDate,
-                    deliveryOrderId = existingItem.deliveryOrderId
+                    do_number = existingItem.do_number
                 )
                 itemsToUpdate.add(mergedItem)
             } else {
-                itemsToInsert.add(item.copy(deliveryOrderId = deliveryOrderId))
+                itemsToInsert.add(item.copy(do_number = deliveryOrderId))
             }
         }
 
@@ -190,10 +184,10 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
 
     fun deleteItems(items: List<DeliveryOrderItem>) {
         if (items.isEmpty()) return
-        val sql = "DELETE FROM DeliveryOrderItem WHERE id = ? AND deliveryOrderId = ?"
+        val sql = "DELETE FROM DeliveryOrderItem WHERE id = ? AND do_number = ?"
         try {
             items.forEach { item ->
-                jdbcTemplate.update(sql, item.id, item.deliveryOrderId)
+                jdbcTemplate.update(sql, item.id, item.do_number)
             }
         } catch (e: Exception) {
             throw e
@@ -201,7 +195,7 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun findByDeliveryOrderId(deliveryOrderId: String): List<DeliveryOrderItem> {
-        val sql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
+        val sql = "SELECT * FROM DeliveryOrderItem WHERE do_number = ?"
         return jdbcTemplate.query(sql, rowMapper, deliveryOrderId)
     }
 }

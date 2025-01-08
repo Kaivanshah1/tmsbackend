@@ -2,39 +2,38 @@ package com.liquifysolutions.tms.tmsbackend.model
 
 import java.util.UUID
 
+
+// input: create, update
+// output: get
 data class DeliveryOrder(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String?,
     val contractId: String?,
     val partyId: String?,
     val dateOfContract: Long?,
-    val partyname: String?,
-    val status: String,
+    val status: String?,
+    val grandTotalQuantity: Double = 0.0,
+    val grandTotalDeliveredQuantity: Double = 0.0,
     val deliveryOrderSections: List<DeliveryOrderSection>?,
-    val grandTotalQuantity: Int? = 0,
-    val grandTotalPendingQuantity: Int? = 0,
-    val grandTotalInProgressQuantity: Int? = 0,
-    val grandTotalDeliveredQuantity: Int? = 0,
-    val createdAt: Long? = System.currentTimeMillis(),
-    val updatedAt: Long? = System.currentTimeMillis()
+    val createdat: Long? = System.currentTimeMillis(),
+    val updatedat: Long? = System.currentTimeMillis()
 )
 
 data class DeliveryOrderItem(
     val id: String = UUID.randomUUID().toString(),
-    val deliveryOrderId: String?,
+    val do_number: String?,
     val district: String?,
     val taluka: String?,
     val locationId: String?,
     val materialId: String?,
-    val quantity: Int,
-    var pendingQuantity: Int? = 0,
-    var deliveredQuantity: Int? = 0,
-    var inProgressQuantity: Int? = 0,
+    val quantity: Double? = 0.0,
+    var pendingQuantity: Double? = 0.0,
+    var deliveredQuantity: Double? = 0.0,
     val rate: Double?,
     val unit: String?,
-    val dueDate: Long?,
-    val status: String
+    val dueDate: Long?
 )
 
+// List Item for Delivery Challan
 data class DeliveryOrderItemMetaData(
     val id: String,
     val district: String?,
@@ -46,16 +45,13 @@ data class DeliveryOrderItemMetaData(
     val rate: Double,
     val status: String,
     var deliveredQuantity: Double? = 0.0,
-    var inProgressQuantity: Double? = 0.0,
 )
 
 data class DeliveryOrderSection(
     val district: String?,
-    val totalQuantity: Int = 0,
-    val totalPendingQuantity: Int = 0,
-    val totalInProgressQuantity: Int = 0,
-    val totalDeliveredQuantity: Int = 0,
-    val status: String,
+    val totalQuantity: Double = 0.0,
+    val totalPendingQuantity: Double = 0.0,
+    val totalDeliveredQuantity: Double = 0.0,
     var deliveryOrderItems: List<DeliveryOrderItem> = emptyList()
 )
 
@@ -66,4 +62,29 @@ data class ListDeliveryOrderItem(
     val partyname: String?,
     val status: String?,
     val createdAt: Long?,
+)
+
+
+// input: none
+// output: List List<DeliveryOrderRecord>
+data class DeliveryOrderRecord(
+    val id: String,
+    val contractId: String?,
+    val partyName: String?,
+    val status: String?,
+    val dateOfContract: String?,
+    val grandTotalDeliveredQuantity: Double = 0.0,
+    val grandTotalQuantity: Double=0.0,
+)
+
+
+// input: List
+data class ListDeliveryOrderInput(
+    val search: String? = null,
+    val page: Int,
+    val size: Int,
+    val statuses: List<String> = emptyList(),
+    val partyIds: List<String> = emptyList(),
+    val fromDate: Long? = null,
+    val toDate:Long?=null,
 )

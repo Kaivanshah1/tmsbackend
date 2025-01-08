@@ -13,8 +13,27 @@ import org.springframework.web.bind.annotation.*
 class LocationController(private val locationService: LocationService, private val stateService: StateService) {
 
     @PostMapping("/list")
-    fun getAllLocations(): ResponseEntity<List<Location>> =
-        ResponseEntity.ok(locationService.getAllLocations())
+    fun getAllLocations(@RequestBody request: ListLocationsInput): ResponseEntity<List<Location>> {
+        val locations = locationService.searchLocations(
+            search = request.search,
+            states = request.states,
+            districts = request.districts,
+            talukas = request.talukas,
+            cities = request.cities,
+            getAll = request.getAll,
+            page = request.page,
+            size = request.size,
+            statuses = request.statuses
+        )
+        return ResponseEntity.ok(locations)
+    }
+
+    @GetMapping("/all")
+    fun getAllLocations(): ResponseEntity<List<Location>> {
+        val locations = locationService.getAllLocations()
+        return ResponseEntity.ok(locations)
+    }
+
 
     @GetMapping("get/{id}")
     fun getLocationById(@PathVariable id: String): ResponseEntity<Location> {
@@ -27,6 +46,18 @@ class LocationController(private val locationService: LocationService, private v
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body(null)
         }
+    }
+
+    @GetMapping("/deactivate/{locationId}")
+    fun deactivateLocation(@PathVariable locationId: String): ResponseEntity<Void> {
+        locationService.deactivateLocation(locationId)
+        return ResponseEntity<Void>(HttpStatus.NO_CONTENT)
+    }
+
+    @GetMapping("/activate/{locationId}")
+    fun activateLocation(@PathVariable locationId: String): ResponseEntity<Void> {
+        locationService.activateLocation(locationId)
+        return ResponseEntity<Void>(HttpStatus.NO_CONTENT)
     }
 
     @PostMapping("/create")

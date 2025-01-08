@@ -11,24 +11,47 @@ class DeliveryOrderService(
     private val deliveryOrderItemRepository: DeliveryOrderItemRepository
 ) {
     fun createDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): DeliveryOrder? {
+        try {
+            // 1. Generate the do_number
+            val nextDoNumber = generateNextDoNumber()
+            val deliveryOrderWithDoNumber = deliveryOrder.copy(id = nextDoNumber)
 
-        deliveryOrderRepository.create(deliveryOrder)
+            // 2. Create the Delivery Order
+            deliveryOrderRepository.create(deliveryOrderWithDoNumber)
 
-        var itemsToSave: List<DeliveryOrderItem> = emptyList()
+            // 3. Prepare Delivery Order Items
+            var itemsToSave: List<DeliveryOrderItem> = emptyList()
 
-        for (section in sections) {
-            for(item in section.deliveryOrderItems) {
-                itemsToSave = itemsToSave + item.copy(deliveryOrderId = deliveryOrder.id)
+            for (section in sections) {
+                for (item in section.deliveryOrderItems) {
+                    itemsToSave = itemsToSave + item.copy(do_number = deliveryOrderWithDoNumber.id)
+                }
             }
-        }
 
-        deliveryOrderItemRepository.saveAll(itemsToSave, deliveryOrder.id);
-        return deliveryOrderRepository.findById(deliveryOrder.id);
+            // 4. Save Delivery Order Items
+            deliveryOrderItemRepository.saveAll(itemsToSave, deliveryOrderWithDoNumber.id!!);
+
+            // 5. Return the created Delivery Order with the generated do_number
+            return deliveryOrderRepository.findById(deliveryOrderWithDoNumber.id!!);
+        }catch (e: Exception){
+            throw e;
+        }
     }
 
-    fun listAllDeliveryOrder(page: Int, size: Int): List<ListDeliveryOrderItem> {
-        val offset = (page - 1) * size
-        return deliveryOrderRepository.findAll(size, offset)
+    fun generateNextDoNumber(): String {
+        val lastDoNumber = deliveryOrderRepository.getLastDoNumber()
+        val nextNumber = if (lastDoNumber == null) {
+            1
+        } else {
+            val lastNumber = lastDoNumber.substring(3).toIntOrNull() ?: 0
+            lastNumber + 1
+        }
+        return "DO_" + String.format("%04d", nextNumber)
+    }
+
+
+    fun listAllDeliveryOrder(request: ListDeliveryOrderInput): List<DeliveryOrderRecord> {
+        return deliveryOrderRepository.findAll(request)
     }
 
     fun listAllDeliveryOrderItems(deliveryOrderId: String): List<DeliveryOrderItemMetaData>{
@@ -43,15 +66,12 @@ class DeliveryOrderService(
         deliveryOrderRepository.update(deliveryOrder)
         val itemsToSave = sections.flatMap { section ->
             section.deliveryOrderItems?.map { item ->
-                item.copy(deliveryOrderId = deliveryOrder.id)
+                item.copy(do_number = deliveryOrder.id)
             } ?: emptyList()
         }
 
-        deliveryOrderItemRepository.syncItems(itemsToSave, deliveryOrder.id)
-        return deliveryOrderRepository.findById(deliveryOrder.id);
+        deliveryOrderItemRepository.syncItems(itemsToSave, deliveryOrder.id!!)
+        return deliveryOrderRepository.findById(deliveryOrder.id!!);
     }
 
-    fun deleteDeliveryOrderById(id: String): Int {
-        return deliveryOrderRepository.deleteById(id)
-    }
 }

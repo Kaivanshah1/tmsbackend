@@ -14,14 +14,13 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
 
     private val deliveryChallanRowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryChallan(
-            id = rs.getString("id"),
-            deliveryOrderId = rs.getString("deliveryOrderId"),
-            dateOfChallan = rs.getLong("dateOfChallan"),
+            id = rs.getString("dc_number"),
+            do_number = rs.getString("do_number"),
+            dateOfChallan = rs.getLong("dateofchallan"),
             status = rs.getString("status"),
-            partyName = rs.getString("partyName"),
-            totalDeliveringQuantity = rs.getDouble("totalDeliveringQuantity"),
-            createdAt = rs.getLong("createdAt"),
-            updatedAt = rs.getLong("updatedAt"),
+            totalDeliveringQuantity = rs.getDouble("totaldeliveringquantity"),
+            createdAt = rs.getLong("createdat"),
+            updatedAt = rs.getLong("updatedat"),
             deliveryChallanItems = emptyList()
         )
     }
@@ -29,17 +28,22 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
     private val deliveryChallanItemRowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryChallanItem(
             id = rs.getString("id"),
-            deliveryChallanId = rs.getString("deliveryChallanId"),
-            deliveryOrderItemId = rs.getString("deliveryOrderItemId"),
+            dc_number = rs.getString("dc_number"),
+            deliveryOrderItemId = rs.getString("deliveryorderitemid"),
             district = rs.getString("district"),
             taluka = rs.getString("taluka"),
-            locationName = rs.getString("locationName"),
-            materialName = rs.getString("materialName"),
+            locationName = rs.getString("locationname"),
+            materialName = rs.getString("materialname"),
             quantity = rs.getDouble("quantity"),
             rate = rs.getDouble("rate"),
-            dueDate = rs.getLong("dueDate"),
-            deliveringQuantity = rs.getDouble("deliveringQuantity")
+            dueDate = rs.getLong("duedate"),
+            deliveringQuantity = rs.getDouble("deliveringquantity")
         )
+    }
+
+    fun getDeliveryChallanCount(): Int? {
+        val sql = "SELECT COUNT(*) FROM deliverychallan"
+        return jdbcTemplate.queryForObject(sql, Int::class.java)
     }
 
     fun update(deliveryChallan: DeliveryChallan): DeliveryChallan {
@@ -50,8 +54,8 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
                 dateofchallan = ?,
                 status = ?,
                 totaldeliveringquantity = ?,
-                updatedAt = ?
-            WHERE id = ?
+                updatedat = ?
+            WHERE dc_number = ?
         """
 
             val currentTime = Instant.now().toEpochMilli()
@@ -115,16 +119,24 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
 
     val sql = """
         SELECT
-            dc.id,
-            dc.deliveryorderid,
+            dc.dc_number,
+            dc.do_number,
             dc.dateofchallan,
             dc.status,
             p.name AS partyname,
             dc.totaldeliveringquantity,
             dc.createdat,
-            dc.updatedat,
-            dci.id as item_id,
-            dci.deliverychallanid,
+            dc.updatedat
+        FROM deliverychallan dc
+        JOIN deliveryorder d_orders ON dc.do_number = d_orders.do_number
+        JOIN party p ON d_orders.partyid = p.id
+        WHERE dc.dc_number = ?
+    """.trimIndent()
+
+    val itemsSql = """
+       SELECT
+            dci.id,
+            dci.dc_number,
             dci.deliveryorderitemid,
             dci.district,
             dci.taluka,
@@ -134,73 +146,47 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
             dci.rate,
             dci.duedate,
             dci.deliveringquantity
-        FROM deliverychallan dc
-        JOIN deliveryorder d_orders ON dc.deliveryorderid = d_orders.id
-        JOIN party p ON d_orders.partyid = p.id
-        LEFT JOIN deliverychallanitems dci ON dc.id = dci.deliverychallanid
-        WHERE dc.id = ?
+            FROM deliverychallanitems dci
+        WHERE dci.dc_number = ?
     """.trimIndent()
 
     fun getById(id: String): DeliveryChallan? {
         return try {
             jdbcTemplate.query(sql, { rs, _ ->
-                ChallanRow(
-                    challanId = rs.getString("id"),
-                    deliveryOrderId = rs.getString("deliveryorderid"),
+                DeliveryChallan(
+                    id = rs.getString("dc_number"),
+                    do_number = rs.getString("do_number"),
                     dateOfChallan = rs.getLong("dateofchallan"),
                     status = rs.getString("status"),
-                    partyName = rs.getString("partyname"),
                     totalDeliveringQuantity = rs.getDouble("totaldeliveringquantity"),
                     createdAt = rs.getLong("createdat"),
-                    updatedAt = rs.getLong("updatedat"),
-                    itemId = rs.getString("item_id"), // Handle potential NULL
-                    district = rs.getString("district"), // Handle potential NULL
-                    taluka = rs.getString("taluka"), // Handle potential NULL
-                    locationName = rs.getString("locationname"), // Handle potential NULL
-                    materialName = rs.getString("materialname"), // Handle potential NULL
-                    quantity = rs.getDouble("quantity"),
-                    rate = rs.getDouble("rate"),
-                    dueDate = rs.getLong("duedate"),
-                    deliveringQuantity = rs.getDouble("deliveringquantity"),
-                    deliveryOrderItemId = rs.getString("deliveryorderitemid")
+                    updatedAt = rs.getLong("updatedat")
                 )
             }, id)
-                .takeIf { it.isNotEmpty() }
-                ?.let { rows ->
-                    val firstRow = rows.first()
-                    DeliveryChallan(
-                        id = firstRow.challanId,
-                        deliveryOrderId = firstRow.deliveryOrderId,
-                        dateOfChallan = firstRow.dateOfChallan,
-                        status = firstRow.status,
-                        partyName = firstRow.partyName,
-                        totalDeliveringQuantity = firstRow.totalDeliveringQuantity,
-                        createdAt = firstRow.createdAt,
-                        updatedAt = firstRow.updatedAt,
-                        deliveryChallanItems = rows.map { row ->
-                            DeliveryChallanItem(
-                                id = row.itemId,
-                                deliveryChallanId = row.challanId,
-                                deliveryOrderItemId = row.deliveryOrderItemId,
-                                district = row.district,
-                                taluka = row.taluka,
-                                locationName = row.locationName,
-                                materialName = row.materialName,
-                                quantity = row.quantity,
-                                rate = row.rate,
-                                dueDate = row.dueDate,
-                                deliveringQuantity = row.deliveringQuantity
-                            )
-                        }
-                    )
+                .firstOrNull()
+                ?.let { deliveryChallan ->
+                    val deliveryChallanItems = jdbcTemplate.query(itemsSql,{rs, _ ->
+                        DeliveryChallanItem(
+                            id = rs.getString("id"),
+                            dc_number = rs.getString("dc_number"),
+                            deliveryOrderItemId = rs.getString("deliveryorderitemid"),
+                            district = rs.getString("district"),
+                            taluka = rs.getString("taluka"),
+                            locationName = rs.getString("locationname"),
+                            materialName = rs.getString("materialname"),
+                            quantity = rs.getDouble("quantity"),
+                            rate = rs.getDouble("rate"),
+                            dueDate = rs.getLong("duedate"),
+                            deliveringQuantity = rs.getDouble("deliveringquantity")
+                        )
+                    },deliveryChallan.id)
+                    deliveryChallan.copy(deliveryChallanItems = deliveryChallanItems)
                 }
         } catch (e: Exception) {
-            // Log the error for debugging (optional)
             println("Error fetching DeliveryChallan: ${e.message}")
-            throw e // Re-throw the exception for higher-level handling
+            throw e
         }
     }
-
 
     private data class ChallanRow(
         val challanId: String,
@@ -223,19 +209,17 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
         val deliveryOrderItemId: String?
     )
 
-
     fun listAll(request: ListDeliveryChallansInput): List<DeliveryChallan> {
         try {
-            val page = request.page ?: 1
-            val size = request.size ?: 10
-            val offset = (page - 1) * size
+            val page = (request.page ?: 1).coerceAtLeast(1)
+            val size = (request.size ?: 10).coerceIn(1, 100)
+            val offset = ((page - 1) * size).coerceAtLeast(0)
 
             val sql = """
             SELECT 
-                dc.*,
-                p.name as partyName
+                dc.*
             FROM deliverychallan as dc
-            JOIN deliveryorder as d ON dc.deliveryorderid = d.id
+            JOIN deliveryorder as d ON dc.do_number = d.do_number
             JOIN party as p ON d.partyid = p.id
             ORDER BY dc.createdat DESC
             LIMIT ? OFFSET ?
@@ -243,19 +227,17 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
 
             return jdbcTemplate.query(sql, { rs, _ ->
                 DeliveryChallan(
-                    id = rs.getString("id"),
-                    deliveryOrderId = rs.getString("deliveryorderid"),
+                    id = rs.getString("dc_number"),
+                    do_number = rs.getString("do_number"),
                     dateOfChallan = rs.getLong("dateofchallan"),
                     status = rs.getString("status"),
                     totalDeliveringQuantity = rs.getDouble("totaldeliveringquantity"),
-                    createdAt = rs.getLong("createdAt"),
-                    updatedAt = rs.getLong("updatedAt"),
-                    partyName = rs.getString("partyName")
+                    createdAt = rs.getLong("createdat"),
+                    updatedAt = rs.getLong("updatedat")
                 )
             }, size, offset)
-        }catch (e: Exception){
-            println("Error while fetching delivery challan $e")
-            return emptyList()
+        } catch (e: Exception) {
+            throw e;
         }
     }
 
@@ -263,13 +245,13 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
         try {
             val sql = """
             INSERT INTO DeliveryChallan
-            (id, deliveryOrderId, dateOfChallan, status, totalDeliveringQuantity, createdAt, updatedAt)
+            (dc_number, do_number, dateofchallan, status, totaldeliveringquantity, createdat, updatedat)
             VALUES (?, ?, ?, ?, ?, ?, ?)
         """
             return jdbcTemplate.update(
                 sql,
                 deliveryChallan.id,
-                deliveryChallan.deliveryOrderId,
+                deliveryChallan.do_number,
                 deliveryChallan.dateOfChallan,
                 deliveryChallan.status,
                 deliveryChallan.totalDeliveringQuantity,
@@ -284,7 +266,7 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
     fun createItem(deliveryChallanItem: DeliveryChallanItem): Int {
         val sql = """
         INSERT INTO DeliveryChallanItems 
-        (id, deliveryChallanId, deliveryOrderItemId, district, taluka, locationName, materialName, quantity, rate, dueDate, deliveringQuantity) 
+        (id, dc_number, deliveryorderitemid, district, taluka, locationname, materialname, quantity, rate, duedate, deliveringquantity) 
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """
 
@@ -292,7 +274,7 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
             jdbcTemplate.update(
                 sql,
                 deliveryChallanItem.id,
-                deliveryChallanItem.deliveryChallanId,
+                deliveryChallanItem.dc_number,
                 deliveryChallanItem.deliveryOrderItemId,
                 deliveryChallanItem.district,
                 deliveryChallanItem.taluka,
@@ -310,7 +292,7 @@ class DeliveryChallanRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun getItemsByChallanId(challanId: String): List<DeliveryChallanItem> {
-        val sql = "SELECT * FROM DeliveryChallanItems WHERE deliveryChallanId = ?"
+        val sql = "SELECT * FROM DeliveryChallanItems WHERE dc_number = ?"
         return jdbcTemplate.query(sql, deliveryChallanItemRowMapper, challanId)
     }
 }

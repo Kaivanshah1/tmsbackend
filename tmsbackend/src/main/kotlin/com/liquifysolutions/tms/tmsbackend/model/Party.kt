@@ -13,5 +13,15 @@ data class Party(
     val pincode: String?,
     val state: String,
     val taluka: String,
-    val city: String
+    val city: String,
+    val status: String = "active",
+)
+
+
+data class ListPartiesInput(
+    val search: String? = null,
+    val getAll: Boolean? = false,
+    val statuses: List<String>? = null,
+    val page: Int = 1,
+    val size: Int = 10
 )

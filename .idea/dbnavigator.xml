@@ -20,8 +20,8 @@
     <retain-sticky-names value="false" />
   </component>
   <component name="DBNavigator.Project.FileConnectionMappingManager">
+    <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/db/migration/V1__init.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
     <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/schema.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
-    <mapping file-url="file://$PROJECT_DIR$/tmsbackend/src/main/resources/db/migration/adding_partyname_in_deliveryorder.sql" connection-id="08997d5d-a716-4baa-8741-5da059c5c79e" session-id="MAIN" current-schema="tms" />
   </component>
   <component name="DBNavigator.Project.ObjectQuickFilterManager">
     <last-used-operator value="EQUAL" />
@@ -35,7 +35,7 @@
           <description value="" />
           <database-type value="POSTGRES" />
           <config-type value="BASIC" />
-          <database-version value="17.0" />
+          <database-version value="17.2" />
           <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />

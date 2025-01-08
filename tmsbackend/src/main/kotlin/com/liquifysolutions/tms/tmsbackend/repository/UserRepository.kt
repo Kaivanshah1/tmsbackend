@@ -67,4 +67,9 @@ class UserRepository(private val jdbcTemplate: JdbcTemplate) {
             return user;
         }
     }
+
+    fun deleteUserByEmail(email: String): Int {
+        val sql = "DELETE FROM users WHERE email = ?"
+        return jdbcTemplate.update(sql, email)
+    }
 }

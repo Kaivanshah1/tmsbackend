@@ -1,7 +1,9 @@
 package com.liquifysolutions.tms.tmsbackend.controller
 
+import com.liquifysolutions.tms.tmsbackend.model.ListPartiesInput
 import com.liquifysolutions.tms.tmsbackend.model.Party
 import com.liquifysolutions.tms.tmsbackend.service.PartyService
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 
@@ -11,8 +13,28 @@ import org.springframework.web.bind.annotation.*
 class PartyController(private val partyService: PartyService) {
 
     @PostMapping("/list")
-    fun getAllParties(): ResponseEntity<List<Party>> =
-        ResponseEntity.ok(partyService.getAllParties())
+    fun getAllParties(@RequestBody request: ListPartiesInput): ResponseEntity<Any> {
+        val parties = partyService.searchParties(
+            search = request.search,
+            statuses = request.statuses,
+            getAll = request.getAll,
+            page = request.page,
+            size = request.size
+        )
+        return ResponseEntity.ok(parties)
+    }
+
+    @GetMapping("/activate/{partyId}")
+    fun activateParty(@PathVariable partyId: String): ResponseEntity<Void> {
+        partyService.activateParty(partyId)
+        return ResponseEntity<Void>(HttpStatus.NO_CONTENT)
+    }
+
+    @GetMapping("/deactivate/{partyId}")
+    fun deactivateParty(@PathVariable partyId: String): ResponseEntity<Void> {
+        partyService.deactivateParty(partyId)
+        return ResponseEntity<Void>(HttpStatus.NO_CONTENT)
+    }
 
     @GetMapping("/get/{id}")
     fun getPartyById(@PathVariable id: String): ResponseEntity<Party> =

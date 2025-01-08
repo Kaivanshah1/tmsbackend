@@ -1,7 +1,9 @@
 package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.model.Employee
+import com.liquifysolutions.tms.tmsbackend.model.ListEmployeesInput
 import com.liquifysolutions.tms.tmsbackend.model.UserRegistrationDto
+import com.liquifysolutions.tms.tmsbackend.repository.UserRepository
 import com.liquifysolutions.tms.tmsbackend.service.AuthService
 import com.liquifysolutions.tms.tmsbackend.service.EmployeeService
 import org.springframework.http.HttpStatus
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.*
 @CrossOrigin
 @RestController
 @RequestMapping("/api/v1/employees")
-class EmployeeController(private val employeeService: EmployeeService) {
+class EmployeeController(private val employeeService: EmployeeService, private val authService: AuthService, private val userRepository: UserRepository) {
     // Create a new employee
     @PostMapping("/create")
     fun createEmployee(@RequestBody employee: Employee): ResponseEntity<Employee> {
@@ -28,9 +30,15 @@ class EmployeeController(private val employeeService: EmployeeService) {
 
     // Get all employees
     @PostMapping("/list")
-    fun getAllEmployees(): ResponseEntity<List<Employee>> {
-        val employees = employeeService.getAllEmployees()
+    fun getAllEmployees(@RequestBody request: ListEmployeesInput): ResponseEntity<List<Employee>> {
+        val employees = employeeService.getAllEmployees(request)
         return ResponseEntity.ok(employees)
+    }
+
+    @GetMapping("/deactivate/{employeeId}")
+    fun deactivateEmployee(@PathVariable employeeId: String): ResponseEntity<Void> {
+        employeeService.deactivateEmployee(employeeId)
+        return ResponseEntity<Void>(HttpStatus.NO_CONTENT)
     }
 
     // Update an employee by ID

@@ -12,35 +12,29 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 
     private val rowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryOrder(
-            id = rs.getString("id"),
-            contractId = rs.getString("contractId"),
-            partyId = rs.getString("partyId"),
-            dateOfContract = rs.getLong("dateOfContract").takeIf { !rs.wasNull() },
+            id = rs.getString("do_number"),
+            contractId = rs.getString("contractid"),
+            partyId = rs.getString("partyid"),
+            dateOfContract = rs.getLong("dateofcontract").takeIf { !rs.wasNull() },
             status = rs.getString("status"),
-            deliveryOrderSections = getDeliveryOrderSections(rs.getString("id")),
-            grandTotalQuantity = rs.getInt("grandTotalQuantity"),
-            grandTotalPendingQuantity = rs.getInt("grandTotalPendingQuantity"),
-            grandTotalInProgressQuantity = rs.getInt("grandTotalInProgressQuantity"),
-            grandTotalDeliveredQuantity = rs.getInt("grandTotalDeliveredQuantity"),
-            partyname = rs.getString("partyname"),
-            createdAt = rs.getLong("createdAt").takeIf { !rs.wasNull() },
-            updatedAt = rs.getLong("updatedAt").takeIf { !rs.wasNull() }
+            deliveryOrderSections = getDeliveryOrderSections(rs.getString("do_number")),
+            createdat = rs.getLong("createdat").takeIf { !rs.wasNull() },
+            updatedat = rs.getLong("updatedat").takeIf { !rs.wasNull() }
         )
     }
 
     private val deliveryOrderItemRowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryOrderItem(
             id = rs.getString("id"),
-            deliveryOrderId = rs.getString("deliveryOrderId"),
+            do_number = rs.getString("do_number"),
             district = rs.getString("district"),
             taluka = rs.getString("taluka"),
             locationId = rs.getString("locationId"),
             materialId = rs.getString("materialId"),
-            quantity = rs.getInt("quantity"),
+            quantity = rs.getDouble("quantity"),
             rate = rs.getDouble("rate"),
             unit = rs.getString("unit"),
             dueDate = rs.getLong("dueDate"),
-            status = rs.getString("status")
         )
     }
 
@@ -62,6 +56,11 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         return emptyList()
     }
 
+    fun getLastDoNumber(): String? {
+        val sql = "SELECT MAX(do_number) FROM deliveryorder"
+        return jdbcTemplate.queryForObject(sql, String::class.java)
+    }
+
     fun getDeliveryOrderItemById(deliveryOrderId: String): List<DeliveryOrderItemMetaData> {
         return try {
             val sql = """
@@ -70,20 +69,18 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 doi.district,
                 doi.taluka,
                 doi.quantity,
-                doi.status,
                 doi.rate,
                 doi.duedate,
-                m.name as materialName,
-                lo.name as locationName
+                m.name as name,
+                lo.name as name
             from deliveryorderitem as doi
             join location as lo on lo.id = doi.locationid
             join material as m on m.id = doi.materialid
-            where doi.deliveryorderid = ?
+            where doi.do_number = ?
         """.trimIndent()
 
             val items = jdbcTemplate.query(sql, deliveryOrderItemMetaDataMapper, deliveryOrderId)
 
-            // Fetch related DeliveryChallanItems and calculate delivered and inProgress quantities
             items.forEach { item ->
                 calculateDeliveredAndInProgressQuantities(item)
             }
@@ -94,15 +91,13 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         }
     }
 
-    private fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItemMetaData) {
-        println("Calculating quantities for DeliveryOrderItem ID: ${item.id}")
-
+    fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItemMetaData) {
         val challanItemsSql = """
             SELECT
                 dc.status,
                 dci.deliveringquantity
             FROM deliverychallanitems as dci
-            JOIN deliverychallan as dc ON dci.deliverychallanid = dc.id
+            JOIN deliverychallan as dc ON dci.dc_number = dc.id
             WHERE dci.deliveryorderitemid = ?
         """.trimIndent()
 
@@ -115,38 +110,27 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 }
             }, item.id
         )
-        println("Number of deliveryChallanItems found: ${deliveryChallanItems.size}")
-
 
         var totalDeliveredQuantity = 0.0
         var totalInProgressQuantity = 0.0
 
         deliveryChallanItems.forEach {
-            println("ChallanItem status: ${it.status}, deliveringQuantity: ${it.deliveringQuantity}")
-            when (it.status) {
-                "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity
-                "IN_PROGRESS" -> totalInProgressQuantity += it.deliveringQuantity
-                "pending" -> totalInProgressQuantity += it.deliveringQuantity  // Treat "pending" as in-progress
+           when (it.status) {
+                "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity // Treat "pending" as in-progress
             }
         }
-
-        println("Total Delivered Quantity : ${totalDeliveredQuantity}")
-        println("Total InProgress Quantity : ${totalInProgressQuantity}")
-
-
         item.deliveredQuantity = totalDeliveredQuantity
-        item.inProgressQuantity = totalInProgressQuantity
     }
 
     fun create(deliveryOrder: DeliveryOrder): Int {
         try {
             val sql = """
             INSERT INTO DeliveryOrder (
-                id, contractId, partyId, dateOfContract, status,
-                grandTotalQuantity, grandTotalPendingQuantity,
-                grandTotalInProgressQuantity, grandTotalDeliveredQuantity, createdAt, updatedAt
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """
+                 do_number, contractId, partyId, dateOfContract, status,
+                 createdAt, updatedAt
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+        """.trimIndent()
+
             return jdbcTemplate.update(
                 sql,
                 deliveryOrder.id,
@@ -154,12 +138,8 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 deliveryOrder.partyId,
                 deliveryOrder.dateOfContract,
                 deliveryOrder.status,
-                deliveryOrder.grandTotalQuantity,
-                deliveryOrder.grandTotalPendingQuantity,
-                deliveryOrder.grandTotalInProgressQuantity,
-                deliveryOrder.grandTotalDeliveredQuantity,
-                deliveryOrder.createdAt,
-                deliveryOrder.updatedAt
+                deliveryOrder.createdat,
+                deliveryOrder.updatedat
             )
         } catch (e: Exception) {
             throw e
@@ -168,10 +148,10 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 
     fun findById(id: String): DeliveryOrder? {
         try {
-            val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE id = ?"
+            val deliveryOrderSql = "SELECT * FROM DeliveryOrder WHERE do_number = ?"
             val deliveryOrder = jdbcTemplate.query(deliveryOrderSql, rowMapper, id).firstOrNull() ?: return null
 
-            val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE deliveryOrderId = ?"
+            val deliveryOrderItemsSql = "SELECT * FROM DeliveryOrderItem WHERE do_number = ?"
             val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
 
             deliveryOrderItems.forEach{ item ->
@@ -183,25 +163,18 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                     val actualDistrict = if (district == "null_district") null else district
                     DeliveryOrderSection(
                         district = actualDistrict,
-                        totalQuantity = items.sumOf { it.quantity },
-                        totalPendingQuantity = items.sumOf { it.pendingQuantity ?: 0 },
-                        totalInProgressQuantity = items.sumOf { it.inProgressQuantity ?: 0},
-                        totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0 },
-                        status = items.firstOrNull()?.status ?: "",
+                        totalQuantity = items.sumOf { it.quantity ?: 0.0 },
+                        totalDeliveredQuantity = items.sumOf { it.deliveredQuantity ?: 0.0 },
                         deliveryOrderItems = items
                     )
                 }
 
-            val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity }
-            val grandTotalPendingQuantity = deliveryOrderItems.sumOf { it.pendingQuantity ?: 0 }
-            val grandTotalInProgressQuantity = deliveryOrderItems.sumOf { it.inProgressQuantity ?: 0 }
-            val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0 }
+            val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity ?: 0.0 }
+            val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0.0 }
 
             return deliveryOrder.copy(
                 deliveryOrderSections = deliveryOrderSections,
                 grandTotalQuantity = grandTotalQuantity,
-                grandTotalPendingQuantity = grandTotalPendingQuantity,
-                grandTotalInProgressQuantity = grandTotalInProgressQuantity,
                 grandTotalDeliveredQuantity = grandTotalDeliveredQuantity
             )
         }catch (e: Exception){
@@ -210,13 +183,12 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
     }
 
     fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItem) {
-        println("Calculating quantities for DeliveryOrderItem ID: ${item.id}")
         val challanItemsSql = """
             SELECT
                 dc.status,
                 dci.deliveringquantity
             FROM deliverychallanitems as dci
-            JOIN deliverychallan as dc ON dci.deliverychallanid = dc.id
+            JOIN deliverychallan as dc ON dci.dc_number = dc.dc_number
             WHERE dci.deliveryorderitemid = ?
         """.trimIndent()
 
@@ -229,64 +201,92 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 }
             }, item.id
         )
-        println("Number of deliveryChallanItems found: ${deliveryChallanItems.size}")
-
 
         var totalDeliveredQuantity = 0.0
-        var totalInProgressQuantity = 0.0
 
         deliveryChallanItems.forEach {
-            println("ChallanItem status: ${it.status}, deliveringQuantity: ${it.deliveringQuantity}")
-            when (it.status) {
+             when (it.status) {
                 "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity
-                "IN_PROGRESS" -> totalInProgressQuantity += it.deliveringQuantity
-                "pending" -> totalInProgressQuantity += it.deliveringQuantity  // Treat "pending" as in-progress
             }
         }
-        println("Total Delivered Quantity : ${totalDeliveredQuantity}")
-        println("Total InProgress Quantity : ${totalInProgressQuantity}")
 
-
-        item.deliveredQuantity = totalDeliveredQuantity.toInt()
-        item.inProgressQuantity = totalInProgressQuantity.toInt()
-        item.pendingQuantity = item.quantity - (totalDeliveredQuantity.toInt() + totalInProgressQuantity.toInt())
+        item.deliveredQuantity = totalDeliveredQuantity
     }
 
-    fun findAll(limit: Int, offset: Int): List<ListDeliveryOrderItem> {
+    fun findAll(input: ListDeliveryOrderInput): List<DeliveryOrderRecord> {
+        val limit = input.size
+        val offset = (input.page - 1) * input.size
+
+        val conditions = mutableListOf<String>()
+        val params = mutableListOf<Any>()
+
+        // 1. Search by DO Number
+        input.search?.let {
+            conditions.add("d.do_number LIKE ?")
+            params.add("%$it%")
+        }
+
+        // 2. Filter by Statuses
+        if (input.statuses.isNotEmpty()) {
+            conditions.add("d.status IN (${input.statuses.joinToString { "?" }})")
+            params.addAll(input.statuses)
+        }
+
+        // 3. Filter by Party IDs
+        if (input.partyIds.isNotEmpty()) {
+            conditions.add("d.partyId IN (${input.partyIds.joinToString { "?" }})")
+            params.addAll(input.partyIds)
+        }
+
+        // 4. Filter by CreatedAt Date Range (comparing as bigint)
+        input.fromDate?.let { from ->
+            conditions.add("d.dateofcontract >= ?")
+            params.add(from) // Keep as bigint (milliseconds)
+        }
+
+        input.toDate?.let { to ->
+            conditions.add("d.dateofcontract <= ?")
+            params.add(to) // Keep as bigint (milliseconds)
+        }
+
+        val whereClause = if (conditions.isNotEmpty()) "WHERE " + conditions.joinToString(" AND ") else ""
+
         val sql = """
-        SELECT 
-            d.id AS id,
+        SELECT
             d.contractId,
-            d.partyId,
+            d.do_number,
+            d.dateofcontract,
             p.name AS partyname,
             d.status,
-            d.createdAt
+            d.createdat
         FROM DeliveryOrder d
         LEFT JOIN Party p ON d.partyId = p.id
-        ORDER BY d.createdAt DESC
+        $whereClause
+        ORDER BY d.createdat DESC
         LIMIT ? OFFSET ?
-    """
+        
+        """.trimIndent()
+
+        params.add(limit)
+        params.add(offset)
+
         return jdbcTemplate.query(sql, { rs, _ ->
-            ListDeliveryOrderItem(
-                id = rs.getString("id"),
-                contractId = rs.getString("contractId"),
-                partyId = rs.getString("partyId"),
-                partyname = rs.getString("partyname"),
+            DeliveryOrderRecord(
+                id = rs.getString("do_number"),
+                contractId = rs.getString("contractid"),
+                dateOfContract = rs.getString("dateofcontract"),
+                partyName = rs.getString("partyname"),
                 status = rs.getString("status"),
-                createdAt = rs.getLong("createdAt"),
             )
-        }, limit, offset)
+        }, *params.toTypedArray())
     }
 
-    @Transactional
     fun update(deliveryOrder: DeliveryOrder): Int? {
         val sql = """
             UPDATE DeliveryOrder SET
                 contractId = ?, partyId = ?, dateOfContract = ?, status = ?,
-                grandTotalQuantity = ?, grandTotalPendingQuantity = ?,
-                grandTotalInProgressQuantity = ?, grandTotalDeliveredQuantity = ?,
-                createdAt = ?, updatedAt = ?
-            WHERE id = ?
+                createdat = ?, updatedat = ?
+            WHERE do_number = ?
         """
         return jdbcTemplate.update(
             sql,
@@ -294,18 +294,9 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             deliveryOrder.partyId,
             deliveryOrder.dateOfContract,
             deliveryOrder.status,
-            deliveryOrder.grandTotalQuantity,
-            deliveryOrder.grandTotalPendingQuantity,
-            deliveryOrder.grandTotalInProgressQuantity,
-            deliveryOrder.grandTotalDeliveredQuantity,
-            deliveryOrder.createdAt,
-            deliveryOrder.updatedAt,
+            deliveryOrder.createdat,
+            deliveryOrder.updatedat,
             deliveryOrder.id
         )
-    }
-
-    fun deleteById(id: String): Int {
-        val sql = "DELETE FROM DeliveryOrder WHERE id = ?"
-        return jdbcTemplate.update(sql, id)
     }
 }

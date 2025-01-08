@@ -22,16 +22,23 @@ class DeliveryChallanService(
         return deliveryChallanRepository.getById(id)
     }
 
+    fun generateDeliveryChallanId(): String {
+        val rowCount = deliveryChallanRepository.getDeliveryChallanCount()
+        val nextId = rowCount?.plus(1)
+        return String.format("DC_%04d", nextId)
+    }
+
     fun createDeliveryChallan(deliveryOrderId: String): DeliveryChallan? {
-        val deliverChallanToCreate = DeliveryChallan(
-            id = UUID.randomUUID().toString(),
-            deliveryOrderId = deliveryOrderId,
+        val deliveryChallanToCreate = DeliveryChallan(
+            id = generateDeliveryChallanId(),
+            do_number = deliveryOrderId,
             status = "pending",
+            totalDeliveringQuantity = 0.0,
             createdAt = Instant.now().toEpochMilli(),
             updatedAt = Instant.now().toEpochMilli()
         )
-        val deliveryChallan = deliveryChallanRepository.create(deliverChallanToCreate);
-        return deliveryChallanRepository.getById(deliverChallanToCreate.id!!)
+        deliveryChallanRepository.create(deliveryChallanToCreate)
+        return deliveryChallanRepository.getById(deliveryChallanToCreate.id!!)
     }
 
     @Transactional

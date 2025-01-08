@@ -8,5 +8,14 @@ data class Employee (
     val email: String,
     val contactNumber: String?,
     val role: String,
-    val createdAt: Long
+    val createdAt: Long?,
+    val status: String = "active",
+)
+
+data class ListEmployeesInput(
+    val search: String = "",
+    val roles: List<String> = emptyList(),
+    val statuses: List<String> = emptyList(),
+    val page: Int = 1,
+    val size: Int = 10
 )

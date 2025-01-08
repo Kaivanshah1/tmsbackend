@@ -1,0 +1,6 @@
+CREATE TABLE test1 (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50),
+    age INT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
