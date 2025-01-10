@@ -2,7 +2,6 @@ package com.liquifysolutions.tms.tmsbackend.model
 
 import java.util.UUID
 
-
 // input: create, update
 // output: get
 data class DeliveryOrder(
@@ -18,6 +17,12 @@ data class DeliveryOrder(
     val updatedat: Long? = System.currentTimeMillis()
 )
 
+data class AssociatedDeliverChallanItemMetadata(
+    val id: String,
+    val deliveringQuantity: Double = 0.0,
+    val deliveryChallanId: String
+)
+
 data class DeliveryOrderItem(
     val id: String = UUID.randomUUID().toString(),
     val do_number: String?,
@@ -26,11 +31,11 @@ data class DeliveryOrderItem(
     val locationId: String?,
     val materialId: String?,
     val quantity: Double? = 0.0,
-    var pendingQuantity: Double? = 0.0,
     var deliveredQuantity: Double? = 0.0,
     val rate: Double?,
     val unit: String?,
-    val dueDate: Long?
+    val dueDate: Long?,
+    val associatedDeliveryChallanItems: List<AssociatedDeliverChallanItemMetadata> = emptyList(),
 )
 
 // List Item for Delivery Challan
@@ -43,7 +48,7 @@ data class DeliveryOrderItemMetaData(
     val quantity: Int,
     val dueDate: Long?,
     val rate: Double,
-    val status: String,
+    val status: String = "pending",
     var deliveredQuantity: Double? = 0.0,
 )
 
@@ -76,7 +81,6 @@ data class DeliveryOrderRecord(
     val grandTotalDeliveredQuantity: Double = 0.0,
     val grandTotalQuantity: Double=0.0,
 )
-
 
 // input: List
 data class ListDeliveryOrderInput(

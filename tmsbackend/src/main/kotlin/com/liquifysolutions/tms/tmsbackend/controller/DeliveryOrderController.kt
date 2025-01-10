@@ -2,7 +2,9 @@ package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.model.*
 import com.liquifysolutions.tms.tmsbackend.service.DeliveryOrderService
+import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
+import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
 import org.springframework.web.bind.annotation.GetMapping
@@ -37,6 +39,18 @@ class DeliveryOrderController(
     @GetMapping("/list/delivery-order-items/{id}")
     fun getAllDeliveryItems(@PathVariable id: String): List<DeliveryOrderItemMetaData>{
         return deliveryOrderService.listAllDeliveryOrderItems(id)
+    }
+
+    @GetMapping("/download-csv/{deliveryOrderId}")
+    fun downloadDeliveryOrderCsv(@PathVariable deliveryOrderId: String): ResponseEntity<ByteArray> {
+        val csvData = deliveryOrderService.generateDeliveryOrderCsv(deliveryOrderId)
+        val fileName = "delivery_order_$deliveryOrderId.csv"
+        val headers = HttpHeaders().apply {
+            contentType = MediaType.parseMediaType("text/csv")
+            setContentDisposition(org.springframework.http.ContentDisposition.builder("attachment").filename(fileName).build())
+        }
+
+        return ResponseEntity(csvData, headers, HttpStatus.OK)
     }
 
     @GetMapping("/get/{id}")

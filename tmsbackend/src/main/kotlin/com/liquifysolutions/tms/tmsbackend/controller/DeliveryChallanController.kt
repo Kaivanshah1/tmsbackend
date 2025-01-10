@@ -2,6 +2,7 @@ package com.liquifysolutions.tms.tmsbackend.controller
 
 import com.liquifysolutions.tms.tmsbackend.service.DeliveryChallanService
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallan
+import com.liquifysolutions.tms.tmsbackend.model.DeliveryChallanOutputRecord
 import org.springframework.web.bind.annotation.RequestBody;
 import com.liquifysolutions.tms.tmsbackend.model.ListDeliveryChallansInput
 import org.springframework.web.bind.annotation.*
@@ -13,7 +14,7 @@ class DeliveryChallanController(
     private val deliveryChallanService: DeliveryChallanService
 ) {
     @PostMapping("/list")
-    fun getAllDeliveryChallans(@RequestBody request: ListDeliveryChallansInput): List<DeliveryChallan> {
+    fun getAllDeliveryChallans(@RequestBody request: ListDeliveryChallansInput): List<DeliveryChallanOutputRecord> {
         return deliveryChallanService.getAllDeliveryChallans(request)
     }
 

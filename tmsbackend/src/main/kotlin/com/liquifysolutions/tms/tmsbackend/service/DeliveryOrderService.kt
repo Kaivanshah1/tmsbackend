@@ -1,14 +1,20 @@
 package com.liquifysolutions.tms.tmsbackend.service
 
+import com.liquifysolutions.tms.tmsbackend.config.CsvGenerator
 import com.liquifysolutions.tms.tmsbackend.model.*
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderItemRepository
 import com.liquifysolutions.tms.tmsbackend.repository.DeliveryOrderRepository
 import org.springframework.stereotype.Service
+import java.awt.PageAttributes.MediaType
+import java.io.ByteArrayOutputStream
+import java.io.OutputStreamWriter
+import java.net.http.HttpHeaders
 
 @Service
 class DeliveryOrderService(
     private val deliveryOrderRepository: DeliveryOrderRepository,
-    private val deliveryOrderItemRepository: DeliveryOrderItemRepository
+    private val deliveryOrderItemRepository: DeliveryOrderItemRepository,
+    private val csvGenerator: CsvGenerator
 ) {
     fun createDeliveryOrder(deliveryOrder: DeliveryOrder, sections: List<DeliveryOrderSection>): DeliveryOrder? {
         try {
@@ -74,4 +80,10 @@ class DeliveryOrderService(
         return deliveryOrderRepository.findById(deliveryOrder.id!!);
     }
 
+
+    fun generateDeliveryOrderCsv(deliveryOrderId: String): ByteArray {
+        val deliveryOrder = deliveryOrderRepository.findById(deliveryOrderId)
+
+        return csvGenerator.generateCsv(deliveryOrder!!)
+    }
 }

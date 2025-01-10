@@ -1,5 +1,6 @@
 package com.liquifysolutions.tms.tmsbackend.repository
 
+import com.liquifysolutions.tms.tmsbackend.model.AssociatedDeliverChallanItemMetadata
 import com.liquifysolutions.tms.tmsbackend.model.DeliveryOrderItem
 import org.springframework.jdbc.core.JdbcTemplate
 import org.springframework.jdbc.core.RowMapper
@@ -79,6 +80,28 @@ class DeliveryOrderItemRepository(private val jdbcTemplate: JdbcTemplate) {
         val sql = "SELECT * FROM DeliveryOrderItem WHERE do_number = ?"
         return jdbcTemplate.query(sql, rowMapper, deliveryOrderId)
     }
+
+    fun getChallanItems(deliveryOrderItemId: String?): List<AssociatedDeliverChallanItemMetadata> {
+        if (deliveryOrderItemId == null) return emptyList()
+        val sql = """
+            SELECT 
+                id,
+                dc_number,
+                delivering_quantity
+            FROM 
+                deliverychallanitems
+            WHERE 
+                deliveryorderitemid = ?
+        """.trimIndent()
+        return jdbcTemplate.query(sql, { rs, _ ->
+            AssociatedDeliverChallanItemMetadata(
+                id = rs.getString("id"),
+                deliveryChallanId = rs.getString("dc_number"),
+                deliveringQuantity = rs.getDouble("deliveringquantity")
+            )
+        }, deliveryOrderItemId)
+    }
+
 
     fun saveAll(items: List<DeliveryOrderItem>, deliveryOrderId: String) {
         val sql = """

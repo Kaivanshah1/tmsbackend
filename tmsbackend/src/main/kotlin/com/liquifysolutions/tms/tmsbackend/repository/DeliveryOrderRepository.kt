@@ -8,7 +8,7 @@ import org.springframework.transaction.annotation.Transactional
 import java.sql.ResultSet
 
 @Repository
-class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
+class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate, private val deliveryOrderItemRepository: DeliveryOrderItemRepository) {
 
     private val rowMapper = RowMapper { rs: ResultSet, _: Int ->
         DeliveryOrder(
@@ -29,12 +29,12 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             do_number = rs.getString("do_number"),
             district = rs.getString("district"),
             taluka = rs.getString("taluka"),
-            locationId = rs.getString("locationId"),
-            materialId = rs.getString("materialId"),
+            locationId = rs.getString("locationid"),
+            materialId = rs.getString("materialid"),
             quantity = rs.getDouble("quantity"),
             rate = rs.getDouble("rate"),
             unit = rs.getString("unit"),
-            dueDate = rs.getLong("dueDate"),
+            dueDate = rs.getLong("duedate"),
         )
     }
 
@@ -43,10 +43,10 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             id = rs.getString("id"),
             district = rs.getString("district"),
             taluka = rs.getString("taluka"),
-            locationName = rs.getString("locationName"),
-            materialName = rs.getString("materialName"),
+            locationName = rs.getString("locationname"),
+            materialName = rs.getString("materialname"),
             quantity = rs.getInt("quantity"),
-            status = rs.getString("status"),
+//            status = rs.getString("status"),
             rate = rs.getDouble("rate"),
             dueDate = rs.getLong("duedate"),
         )
@@ -71,8 +71,8 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 doi.quantity,
                 doi.rate,
                 doi.duedate,
-                m.name as name,
-                lo.name as name
+                m.name as materialname,
+                lo.name as locationname
             from deliveryorderitem as doi
             join location as lo on lo.id = doi.locationid
             join material as m on m.id = doi.materialid
@@ -97,7 +97,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
                 dc.status,
                 dci.deliveringquantity
             FROM deliverychallanitems as dci
-            JOIN deliverychallan as dc ON dci.dc_number = dc.id
+            JOIN deliverychallan as dc ON dci.dc_number = dc.dc_number
             WHERE dci.deliveryorderitemid = ?
         """.trimIndent()
 
@@ -112,7 +112,6 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         )
 
         var totalDeliveredQuantity = 0.0
-        var totalInProgressQuantity = 0.0
 
         deliveryChallanItems.forEach {
            when (it.status) {
@@ -155,7 +154,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             val deliveryOrderItems = jdbcTemplate.query(deliveryOrderItemsSql, deliveryOrderItemRowMapper, id)
 
             deliveryOrderItems.forEach{ item ->
-                calculateDeliveredAndInProgressQuantities(item)
+                calculateDeliveredQuantities(item)
             }
 
             val deliveryOrderSections =
@@ -172,17 +171,40 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
             val grandTotalQuantity = deliveryOrderItems.sumOf { it.quantity ?: 0.0 }
             val grandTotalDeliveredQuantity = deliveryOrderItems.sumOf { it.deliveredQuantity ?: 0.0 }
 
+            val deliveryChallanItemsSql = """
+               SELECT dci.deliveryorderitemid, dc.dc_number AS deliveryChallanId, dci.deliveringquantity
+                FROM deliveryChallanItem dci
+                JOIN deliverychallan dc ON dci.dc_number = dc.dc_number
+                WHERE dc.do_number = ?
+            """
+            val deliveryChallanItems = jdbcTemplate.query(deliveryChallanItemsSql,
+                RowMapper{rs, _ ->
+                    AssociatedDeliverChallanItemMetadata(
+                        id = rs.getString("deliveryOrderItemId"),
+                        deliveringQuantity = rs.getDouble("deliveringQuantity"),
+                        deliveryChallanId = rs.getString("deliveryChallanId")
+                    )
+                }, id
+            )
+
+            val deliveryChallanItemsGroupedByOrderItem = deliveryChallanItems.groupBy { it.id }
+
+            val updatedDeliveryOrderItems = deliveryOrderItems.map { item ->
+                val associatedDCs = deliveryChallanItemsGroupedByOrderItem[item.id] ?: emptyList()
+                item.copy(associatedDeliveryChallanItems = associatedDCs)
+            }
+
             return deliveryOrder.copy(
                 deliveryOrderSections = deliveryOrderSections,
                 grandTotalQuantity = grandTotalQuantity,
-                grandTotalDeliveredQuantity = grandTotalDeliveredQuantity
-            )
+               grandTotalDeliveredQuantity = grandTotalDeliveredQuantity,
+            ).copy(deliveryOrderSections = deliveryOrderSections.map { it.copy(deliveryOrderItems = updatedDeliveryOrderItems.filter {item -> it.deliveryOrderItems.any { it.id == item.id }})} )
         }catch (e: Exception){
             throw e;
         }
     }
 
-    fun calculateDeliveredAndInProgressQuantities(item: DeliveryOrderItem) {
+    fun calculateDeliveredQuantities(item: DeliveryOrderItem) {
         val challanItemsSql = """
             SELECT
                 dc.status,
@@ -205,9 +227,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         var totalDeliveredQuantity = 0.0
 
         deliveryChallanItems.forEach {
-             when (it.status) {
-                "DELIVERED" -> totalDeliveredQuantity += it.deliveringQuantity
-            }
+              totalDeliveredQuantity += it.deliveringQuantity
         }
 
         item.deliveredQuantity = totalDeliveredQuantity
@@ -222,7 +242,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 
         // 1. Search by DO Number
         input.search?.let {
-            conditions.add("d.do_number LIKE ?")
+            conditions.add("d.do_number ILIKE ?")
             params.add("%$it%")
         }
 
@@ -253,7 +273,7 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
 
         val sql = """
         SELECT
-            d.contractId,
+            d.contractid,
             d.do_number,
             d.dateofcontract,
             p.name AS partyname,
@@ -271,12 +291,26 @@ class DeliveryOrderRepository(private val jdbcTemplate: JdbcTemplate) {
         params.add(offset)
 
         return jdbcTemplate.query(sql, { rs, _ ->
+            val deliveryOrderId = rs.getString("do_number")
+            val deliveryOrderItems = deliveryOrderItemRepository.findByDeliveryOrderId(deliveryOrderId)
+
+            var grandTotalQuantity = 0.0
+            var grandTotalDeliveredQuantity = 0.0
+
+            deliveryOrderItems.forEach { item ->
+                calculateDeliveredQuantities(item)
+                grandTotalQuantity += item.quantity?.toDouble() ?: 0.0
+                grandTotalDeliveredQuantity += item.deliveredQuantity ?: 0.0
+            }
+
             DeliveryOrderRecord(
                 id = rs.getString("do_number"),
                 contractId = rs.getString("contractid"),
                 dateOfContract = rs.getString("dateofcontract"),
                 partyName = rs.getString("partyname"),
                 status = rs.getString("status"),
+                grandTotalQuantity = grandTotalQuantity,
+                grandTotalDeliveredQuantity = grandTotalDeliveredQuantity,
             )
         }, *params.toTypedArray())
     }
